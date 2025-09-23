@@ -1,0 +1,65 @@
+<!-- templates/quiz_result.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="result-page" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+        <div class="result-card card" style="max-width: 28rem; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.08);">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(to right, var(--primary-600), var(--accent-600)); -webkit-background-clip: text; background-clip: text; color: transparent;">Quiz Result</h1>
+            <h2 style="font-size: 1.3rem; color: var(--slate-700); margin-bottom: 2rem;">{{ result.quiz_title }}</h2>
+            <!-- Removed circular progress SVG for a cleaner result section -->
+            <div style="font-size: 1.2rem; margin-bottom: 1.1rem;">
+                <span style="font-weight: 700; color: var(--primary-700);">Score:</span>
+                <span style="font-weight: 700;">{{ result.score }} / {{ result.total_questions }}</span>
+            </div>
+            <div style="font-size: 1.1rem; margin-bottom: 1.1rem; color: var(--slate-600);">
+                <span>Percentage:</span>
+                <span style="font-weight: 700; color: var(--accent-500);">{{ '%.2f'|format((result.score / result.total_questions) * 100) }}%</span>
+            </div>
+            <div id="feedback-message" class="feedback-message" style="margin-bottom: 2rem; font-size: 2rem; font-weight: 700;"></div>
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
+            <div style="text-align: left;">
+                <h3 style="font-size: 1.2rem; color: var(--primary-700); margin-bottom: 1rem;">Quiz Solution</h3>
+                {% for q in solution %}
+                <div class="card" style="margin-bottom: 1.2rem; background: #f8fafc;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">Q{{ loop.index }}. {{ q.question }}</div>
+                    <ul style="list-style: none; padding-left: 0;">
+                        {% for opt in q.options %}
+                        <li style="margin-bottom: 0.3rem;">
+                            {% set style = '' %}
+                            {% if loop.index0 == q.correct and loop.index0 == q.student_choice %}
+                                {% set style = 'background: #bbf7d0; color: #166534; font-weight: 700; border: 2px solid #22c55e;' %}
+                            {% elif loop.index0 == q.correct %}
+                                {% set style = 'background: #dbeafe; color: #2563eb; font-weight: 700;' %}
+                            {% elif loop.index0 == q.student_choice %}
+                                {% set style = 'background: #fee2e2; color: #b91c1c; font-weight: 700; border: 2px solid #ef4444;' %}
+                            {% else %}
+                                {% set style = 'background: #fff; color: #222;' %}
+                            {% endif %}
+                            <span style="display: inline-block; padding: 0.2rem 0.7rem; border-radius: 0.4rem; {{ style }}">
+                                {{ opt }}
+                                {% if loop.index0 == q.correct and loop.index0 == q.student_choice %}<span style="margin-left: 0.5rem; font-size: 0.9em;">✔ (Your answer)</span>{% elif loop.index0 == q.correct %}<span style="margin-left: 0.5rem; font-size: 0.9em;">✔</span>{% elif loop.index0 == q.student_choice %}<span style="margin-left: 0.5rem; font-size: 0.9em;">Your answer</span>{% endif %}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary" style="padding: 0.85rem 2.2rem; font-size: 1.1rem; font-weight: 700;">Back to Dashboard</a>
+        </div>
+    </div>
+    <script>
+    const resultData = {
+        score: {{ result.score|tojson }},
+        total_questions: {{ result.total_questions|tojson }}
+    };
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

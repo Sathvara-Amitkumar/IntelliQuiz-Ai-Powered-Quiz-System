@@ -1,0 +1,242 @@
+<!-- templates/generated_questions.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Generated Questions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background-color: var(--slate-100);">
+    <div class="container" style="max-width: 1000px; padding: 2rem 1rem;">
+        <header style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <a href="{{ url_for('teacher.create_quiz') }}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Quiz Setup
+                </a>
+                <div class="quiz-info" style="text-align: right;">
+                    <span class="badge quiz-type-badge {% if not viva %}quiz-type-mcq{% else %}quiz-type-viva{% endif %}">
+                        {{ 'Multiple Choice' if not viva else 'Open-ended' }}
+                    </span>
+                </div>
+            </div>
+            <h1 style="font-size: 2rem; color: var(--slate-900); margin-bottom: 0.5rem;">Review Generated Questions</h1>
+            <p style="color: var(--slate-600); font-size: 1.1rem;">Review and edit the AI-generated questions before finalizing your quiz.</p>
+        </header>
+
+        {% if saved_files %}
+        <div style="background: linear-gradient(to right, var(--primary-50), var(--slate-50)); border: 1px solid var(--primary-100); border-radius: 0.75rem; padding: 1.2rem; margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--primary-700); margin-bottom: 0.75rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                </svg>
+                <strong>Attached Files</strong>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                {% for fname in saved_files %}
+                <div style="background: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; color: var(--slate-700); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                        <polyline points="13 2 13 9 20 9"/>
+                    </svg>
+                    {{ fname }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error-message" style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--red-700);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    {{ error }}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if questions %}
+        <form id="finalize-quiz-form">
+            <input type="hidden" name="title" value="{{ request.form.title }}">
+            <input type="hidden" name="time_limit" value="{{ request.form.time_limit }}">
+            <input type="hidden" name="mode" value="{{ 'viva' if viva else 'mcq' }}">
+            <!-- Persist anti-cheating selections from setup -->
+            {% set ac_flags = [
+                'random_question_order',
+                'random_option_order',
+                'plagiarism_detection',
+                'strict_time_limits',
+                'auto_submit',
+                'speed_monitoring',
+                'copy_paste_prevention',
+                'tab_switch_detection',
+                'fullscreen_mode',
+                'duplicate_login_detection'
+            ] %}
+            {% for flag in ac_flags %}
+            <input type="hidden" name="{{ flag }}" value="{{ 'true' if request.form.get(flag) else 'false' }}">
+            {% endfor %}
+            
+            <div class="question-list" style="display: grid; gap: 1.5rem; margin-bottom: 2rem;">
+                {% for question in questions %}
+                    {% set qidx = loop.index0 %}
+                    <div class="card question-card" style="background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--slate-200);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <span class="question-number {% if not viva %}question-number-mcq{% else %}question-number-viva{% endif %}">Question {{ loop.index }}</span>
+                                <button type="button" class="btn-icon regenerate-btn" title="Regenerate this question" style="background: none; border: none; color: var(--slate-500); cursor: pointer; padding: 0.5rem; border-radius: 0.375rem; transition: all 0.2s ease;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="question_{{ qidx }}" class="sr-only">Question Text</label>
+                                <textarea name="question_text_{{ qidx }}" id="question_{{ qidx }}" rows="3" 
+                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--slate-200); border-radius: 0.5rem; resize: vertical; background: var(--slate-50);"
+                                >{{ question.text }}</textarea>
+                            </div>
+                        </div>
+
+                        {% if not viva and question.options %}
+                        <div style="padding: 1.5rem;">
+                            <div style="display: grid; gap: 1rem;">
+                                {% for option in question.options %}
+                                <div class="option-row" style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="flex-grow: 1;">
+                                        <input type="text" name="option_{{ qidx }}_{{ loop.index0 }}" 
+                                            value="{{ option }}" 
+                                            placeholder="Option {{ loop.index }}"
+                                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--slate-200); border-radius: 0.5rem; background: white;">
+                                    </div>
+                                    <label class="correct-answer" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                        <input type="radio" name="correct_{{ qidx }}" value="{{ loop.index0 }}" 
+                                            {% if question.answer == option %}checked{% endif %}
+                                            style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary-600);">
+                                        <span style="color: var(--slate-700); font-size: 0.9rem;">Correct</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions" style="position: sticky; bottom: 0; background: var(--slate-100); padding: 1rem 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                <div class="action-group-left">
+                    <a href="{{ url_for('teacher.create_quiz') }}" class="btn" style="background: var(--slate-200); color: var(--slate-700); display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+                        </svg>
+                        Regenerate All
+                    </a>
+                </div>
+                <div class="action-group-right">
+                    <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(to right, var(--primary-600), var(--primary-700));">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        Save Quiz
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% else %}
+        <div style="text-align: center; padding: 4rem 1rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 1rem; color: var(--slate-400);">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <p style="color: var(--slate-600); font-size: 1.1rem;">No questions have been generated yet.</p>
+            <a href="{{ url_for('teacher.create_quiz') }}" class="btn btn-primary" style="margin-top: 1rem;">Create New Quiz</a>
+        </div>
+        {% endif %}
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('finalize-quiz-form');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const questions = [];
+                let idx = 0;
+                while (formData.has(`question_text_${idx}`)) {
+                    const text = formData.get(`question_text_${idx}`);
+                    if (formData.get('mode') === 'viva') {
+                        questions.push({ text });
+                    } else {
+                        const options = [];
+                        let optIdx = 0;
+                        while (formData.has(`option_${idx}_${optIdx}`)) {
+                            options.push(formData.get(`option_${idx}_${optIdx}`));
+                            optIdx++;
+                        }
+                        const correct = formData.get(`correct_${idx}`) || 0;
+                        questions.push({ text, options, correct_answer: parseInt(correct) });
+                    }
+                    idx++;
+                }
+                const payload = {
+                    title: formData.get('title'),
+                    time_limit: formData.get('time_limit'),
+                    mode: formData.get('mode'),
+                    questions
+                };
+                // Include anti-cheating flags in payload
+                const flags = [
+                    'random_question_order',
+                    'random_option_order',
+                    'plagiarism_detection',
+                    'strict_time_limits',
+                    'auto_submit',
+                    'speed_monitoring',
+                    'copy_paste_prevention',
+                    'tab_switch_detection',
+                    'fullscreen_mode',
+                    'duplicate_login_detection'
+                ];
+                flags.forEach(function(key){
+                    const v = formData.get(key);
+                    if (v !== null) payload[key] = (v === 'true' || v === 'on' || v === '1');
+                });
+                let result;
+                try {
+                    const resp = await fetch('/teacher/api/quiz/finalize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const text = await resp.text();
+                    try {
+                        result = JSON.parse(text);
+                    } catch (err) {
+                        throw new Error('Server error: ' + text);
+                    }
+                    if (resp.ok) {
+                        window.location.href = `/teacher/quiz/${result.quiz_id}`;
+                    } else {
+                        alert(result.error || 'Failed to save quiz.');
+                    }
+                } catch (err) {
+                    alert('Unexpected error: ' + err.message);
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>

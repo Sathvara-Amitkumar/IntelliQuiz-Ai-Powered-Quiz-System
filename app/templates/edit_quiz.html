@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Quiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <span class="brand">Edit Quiz</span>
+            <div class="nav-user-section">
+                <a href="{{ url_for('teacher.dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 80px;">
+        <form id="edit-quiz-form" data-quiz-id="{{ quiz.id }}">
+            <div class="card">
+                <h2>Quiz Title</h2>
+                <div class="input-group">
+                    <label for="quiz-title">Title</label>
+                    <input type="text" id="quiz-title" name="title" value="{{ quiz.title }}" required>
+                </div>
+            </div>
+
+            <div id="questions-container">
+                <!-- Questions will be dynamically inserted here by Jinja -->
+                {% for question in questions %}
+                <div class="card question-editor-card" data-question-id="{{ question.id }}">
+                    <button type="button" class="btn-remove-question">&times;</button>
+                    <h4>Question {{ loop.index }}</h4>
+                    <div class="input-group">
+                        <label>Question Text</label>
+                        <input type="text" name="question_text_{{ question.id }}" value="{{ question.question_text }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Options</label>
+                        {% for option in question.options %}
+                        <div class="option-input-group">
+                            <input type="radio" name="correct_answer_{{ question.id }}" value="{{ loop.index0 }}" {% if loop.index0 == question.correct_answer %}checked{% endif %}>
+                            <input type="text" name="option_{{ question.id }}_{{ loop.index0 }}" value="{{ option }}" required>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="add-question-btn" class="btn-secondary">Add Question</button>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+        <div id="update-status" class="status-message"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!-- templates/student_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="student-dashboard">
+    <!-- Navigation Bar -->
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+            <span>AI Quiz Student</span>
+        </div>
+        <div class="nav-menu">
+            <a href="#profile" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Profile
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Logout
+            </a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="dashboard-content" style="padding: 2rem; background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <header class="dashboard-header" id="profile">
+                <div>
+                    <h1 style="color: var(--slate-900); margin-bottom: 0.5rem;">Welcome back, {{ username }}!</h1>
+                    <p style="color: var(--slate-600); font-size: 1.125rem;">Ready to challenge yourself?</p>
+                </div>
+            </header>
+
+            <!-- Quick Join Section -->
+            <section class="join-section" style="margin: 2rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <div class="join-card card" style="background: linear-gradient(to right, var(--primary-600), var(--accent-600)); color: white;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        Join a Quiz
+                    </h2>
+                    <div id="join-error" class="error-message" style="display: none; color: #b91c1c; background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;"></div>
+                    <form id="join-quiz-form" autocomplete="off">
+                                <!-- Show last join error if present -->
+                                {% with messages = get_flashed_messages() %}
+                                    {% if messages %}
+                                        <div class="error-message" style="color: #b91c1c; background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                                            {{ messages[0] }}
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label for="room_code" style="color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem; display: block;">Enter Room Code</label>
+                            <input type="text" id="room_code" name="room_code" 
+                                placeholder="ENTER CODE" required maxlength="6" 
+                                style="text-align: center; letter-spacing: 0.25em; font-family: monospace; font-size: 1.5rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); color: white;"
+                                class="room-code-input">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button type="submit" class="btn" style="background: white; color: var(--primary-700); font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                            Start Quiz
+                        </button>
+                            <button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText(window.location.origin + '/student/dashboard?room_code=' + (document.getElementById('room_code').value||''))">Copy Join Link</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="stats-overview" style="display: grid; gap: 1rem;">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/></svg>
+                            <h3>Total Quizzes</h3>
+                        </div>
+                        <div class="stat-value">{{ quizzes_taken if quizzes_taken is defined else '0' }}</div>
+                        <div class="stat-label">Quizzes completed</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                            <h3>Performance</h3>
+                        </div>
+                        <div class="stat-value">{{ avg_score if avg_score is defined else 'N/A' }}</div>
+                        <div class="stat-label">Average score</div>
+                    </div>
+
+                    {% if past_quizzes and past_quizzes|length > 0 %}
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <h3>Last Result</h3>
+                        </div>
+                        {% set last = past_quizzes[0] %}
+                        <div class="stat-value">{{ last.score }}%</div>
+                        <div class="stat-label">{{ last.title }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Recent Activity Timeline -->
+            <section class="activity-timeline">
+                <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--slate-900); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Recent Activity
+                </h2>
+                {% if recent_activity %}
+                    <div class="timeline" style="display: grid; gap: 1rem;">
+                        {% for activity in recent_activity %}
+                        <div class="activity-item">
+                            <div class="activity-content">
+                                <div class="activity-title">{{ activity }}</div>
+                                <div class="activity-time">Just now</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="text-align: center; padding: 2rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 1rem; color: var(--slate-400);">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <p style="color: var(--slate-600);">No recent activity</p>
+                        <p style="color: var(--slate-500); margin-top: 0.5rem;">Join a quiz to get started!</p>
+                    </div>
+                {% endif %}
+            </section>
+        <!-- Quiz History Section -->
+        <section class="quiz-history" style="margin-top: 2rem;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--slate-900); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                    </svg>
+                    Quiz History
+                </h2>
+                <div class="view-options" style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-sm btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M21 12H3M12 3v18"/>
+                        </svg>
+                        Grid View
+                    </button>
+                    <button class="btn btn-sm btn-secondary active">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"/>
+                            <line x1="8" y1="12" x2="21" y2="12"/>
+                            <line x1="8" y1="18" x2="21" y2="18"/>
+                            <line x1="3" y1="6" x2="3.01" y2="6"/>
+                            <line x1="3" y1="12" x2="3.01" y2="12"/>
+                            <line x1="3" y1="18" x2="3.01" y2="18"/>
+                        </svg>
+                        List View
+                    </button>
+                </div>
+            </div>
+
+            {% if past_quizzes and past_quizzes|length > 0 %}
+            <div class="quiz-history-list">
+                <div class="dashboard-table">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Date & Time</th>
+                                <th>Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for quiz in past_quizzes %}
+                            <tr>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <div class="quiz-icon" style="width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; background: var(--primary-100); color: var(--primary-700); border-radius: 0.5rem;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 500; color: var(--slate-900);">{{ quiz.title }}</div>
+                                            <div style="font-size: 0.875rem; color: var(--slate-500);">Quiz ID: {{ quiz.quiz_id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display: flex; flex-direction: column;">
+                                        {% if quiz.submitted_at %}
+                                            {% if quiz.submitted_at.strftime is not undefined %}
+                                                <span style="color: var(--slate-900);">{{ quiz.submitted_at.strftime('%Y-%m-%d') }}</span>
+                                                <span style="font-size: 0.875rem; color: var(--slate-500);">{{ quiz.submitted_at.strftime('%H:%M:%S') }}</span>
+                                            {% else %}
+                                                {% set parts = quiz.submitted_at.split(' ') %}
+                                                <span style="color: var(--slate-900);">{{ parts[0] if parts|length > 0 else 'N/A' }}</span>
+                                                <span style="font-size: 0.875rem; color: var(--slate-500);">{{ parts[1] if parts|length > 1 else '' }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span style="color: var(--slate-900);">N/A</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="score-badge {% if quiz.score >= 70 %}score-high{% elif quiz.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 20V10M18 20V4M6 20v-4"/>
+                                        </svg>
+                                        {{ quiz.score }}%
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('student.quiz_result', result_id=quiz.quiz_id) }}" class="btn btn-sm btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                            <circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state" style="text-align: center; padding: 3rem; background: white; border-radius: 1rem; border: 2px dashed var(--slate-200);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 1rem; color: var(--slate-400);">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                </svg>
+                <p style="color: var(--slate-600); font-size: 1.1rem;">No quiz history yet</p>
+                <p style="color: var(--slate-500); margin-top: 0.5rem;">Join your first quiz to start your learning journey!</p>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+
+

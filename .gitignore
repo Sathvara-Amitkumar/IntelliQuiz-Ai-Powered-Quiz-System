@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# Environment
+.env
+.venv/
+
+# VS Code
+.vscode/
+
+# SQLite/Database
+*.sqlite3
+*.db
+*.sqlite
+*.sql
+
+# Instance & uploads (user data, runtime files)
+instance/
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Byte-compiled files in utils/
+utils/__pycache__/
+
+# Ignore compiled files in root
+__pycache__/
