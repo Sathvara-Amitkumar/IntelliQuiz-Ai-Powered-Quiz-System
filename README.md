@@ -3,12 +3,12 @@
 A Flask-based web application for creating and managing quizzes (MCQ and viva), handling students, and conducting quizzes with anti-cheating features.
 
 ## Features
-1. **Teacher Dashboard:** Create, preview, and manage quizzes. View student performance and suspicious activity logs.
-2. **Student Dashboard:** Join quizzes using a room code, take quizzes, and view results.
-3. **Quiz Types:** Supports both Multiple Choice Questions (MCQ) and open-ended viva questions.
-4. **Anti-Cheating:** Includes features like tab switch detection, plagiarism checks, time limits, and more.
-5. **AI Question Generation:** Optionally generate questions using Groq AI (requires API key).
-6. **Encrypted Credential Storage:** "Remember me" mode uses encrypted storage for user credentials.
+- **Teacher Dashboard:** Create, preview, and manage quizzes. View student performance and suspicious activity logs.
+- **Student Dashboard:** Join quizzes using a room code, take quizzes, and view results.
+- **Quiz Types:** Supports both Multiple Choice Questions (MCQ) and open-ended viva questions.
+- **Anti-Cheating:** Includes features like tab switch detection, plagiarism checks, time limits, and more.
+- **AI Question Generation:** Optionally generate questions using Groq AI (requires API key).
+- **Encrypted Credential Storage:** "Remember me" mode uses encrypted storage for user credentials.
 
 ## Setup
 
