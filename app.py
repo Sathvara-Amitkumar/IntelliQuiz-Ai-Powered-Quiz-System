@@ -1086,7 +1086,7 @@ def create_app():
     def load_stored_session():
         if 'user_id' not in session and request.endpoint != 'auth.login':
             stored_sessions = session_store.load_credentials()
-            # Look for matching credentials in request cookies
+
             for user_id, data in stored_sessions.items():
                 if request.cookies.get(f'remember_{user_id}'):
                     session['user_id'] = int(user_id)
@@ -1097,7 +1097,7 @@ def create_app():
     
     # Configure session
     app.config['PERMANENT_SESSION_LIFETIME'] = 60 * 60 * 24 * 30  # 30 days in seconds
-    # Respect earlier environment-driven config for cookies without forcing HTTPS in dev
+
     app.config['SESSION_COOKIE_SECURE'] = app.config.get('SESSION_COOKIE_SECURE', False)
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = app.config.get('SESSION_COOKIE_SAMESITE', 'Lax')
