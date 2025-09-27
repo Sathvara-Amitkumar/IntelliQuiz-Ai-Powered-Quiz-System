@@ -332,3 +332,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Google sign-in
+function handleCredentialResponse(response) {
+    // Send the credential to your backend for verification
+    fetch("{{ url_for('auth.google_login', role=role) }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ credential: response.credential })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Redirect to dashboard
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.message || "Google sign-in failed.");
+        }
+    })
+    .catch(() => alert("Google sign-in failed."));
+}

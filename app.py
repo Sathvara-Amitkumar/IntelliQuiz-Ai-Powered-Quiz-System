@@ -10,6 +10,11 @@ import string
 import sys
 from pathlib import Path
 
+from flask import request, jsonify
+import google.oauth2.id_token
+import google.auth.transport.requests
+
+
 # Add the project root directory to Python path
 project_root = str(Path(__file__).parent.absolute())
 if project_root not in sys.path:
@@ -159,6 +164,56 @@ def index():
     if 'user_id' in session:
         return redirect(url_for(f"{session['role']}.dashboard"))
     return render_template('index.html')
+
+# ------------------------------------------------------------------------
+# google log-in
+@bp_auth.route('auth/google-login/<role>', methods=['POST'])
+def google_login(role):
+    data = request.get_json()
+    token = data.get('credential')
+    try:
+        # Verify the token
+        idinfo = google.oauth2.id_token.verify_oauth2_token(
+            token,
+            google.auth.transport.requests.Request(),
+            os.getenv("GOOGLE_CLIENT_ID")
+        )
+
+        google_email = idinfo['email']
+        google_name = idinfo.get('name', google_email.split('@')[0]) # Use email prefix if name not available
+
+        db = get_db()
+        user = db.execute('SELECT id, username, email, role FROM users WHERE email = ?', (google_email,)).fetchone()
+
+        if user is None:
+            # User does not exist, create a new one
+            # For Google sign-in, password can be a placeholder or randomly generated
+            # We'll use the google_name as username, but it can be null in the schema
+            cursor = db.execute(
+                "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)",
+                (google_name, google_email, "google_auth_placeholder", role)
+            )
+            db.commit()
+            user_id = cursor.lastrowid
+            username = google_name
+        else:
+            # User exists, log them in
+            user_id = user['id']
+            username = user['username'] # Use existing username
+
+        session.clear()
+        session['user_id'] = user_id
+        session['role'] = role
+        session['username'] = username
+
+        print("Received token:", token)
+        print(f"User {username} ({google_email}) logged in with role {role}.")
+        return jsonify(success=True, redirect_url=url_for(f"{role}.dashboard"))
+
+    except Exception as e:
+        print("Google sign-in error:", e)
+        return jsonify(success=False, message=f"Google sign-in failed: {str(e)}"), 400
+# -------------------------------------------------------------------------
 
 # --- Authentication Routes ---
 @bp_auth.route('/login/<role>', methods=('GET', 'POST'))

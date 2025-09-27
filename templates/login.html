@@ -48,6 +48,28 @@
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
             </form>
+
+            <br><br>
+            
+            <!-- Google sign in -->
+            <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+            <div id="g_id_onload"
+                data-client_id="1040510934773-o9t2jm5laell897jvp33tsl8a9giaga1.apps.googleusercontent.com"
+                data-callback="handleCredentialResponse"
+                data-auto_prompt="false">
+            </div>
+
+            <div class="g_id_signin"
+                data-type="standard"
+                data-size="large"
+                data-theme="outline"
+                data-text="sign_in_with"
+                data-shape="rectangular"
+                data-logo_alignment="left">
+            </div>
+
+
             <p style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
                 Don't have an account? 
                 <a href="{{ url_for('auth.signup', role=role) }}" class="link">Sign up</a>
