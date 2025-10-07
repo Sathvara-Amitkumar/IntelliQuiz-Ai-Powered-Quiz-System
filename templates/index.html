@@ -124,13 +124,13 @@
 
         .role-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjusted to allow 3 columns on larger screens */
             gap: 2rem;
             margin: 3rem 0;
             width: 100%;
-            max-width: 900px;
+            max-width: 1200px; /* Increased max-width to fit 3 cards */
         }
-
+        
         .role-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -165,7 +165,30 @@
         .role-card:hover::before {
             opacity: 0.05;
         }
-
+        
+        /* New styles for admin icon and button */
+        .admin-icon {
+            background: linear-gradient(45deg, #e53e3e, #8b5cf6); /* Red/purple gradient */
+        }
+        .admin-button {
+            background: linear-gradient(45deg, #e53e3e, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .admin-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(229, 62, 62, 0.4);
+        }
+        
         .role-icon {
             width: 80px;
             height: 80px;
@@ -499,14 +522,12 @@
     </style>
 </head>
 <body>
-    <!-- Background Decoration -->
     <div class="bg-decoration">
         <div class="bg-circle"></div>
         <div class="bg-circle"></div>
         <div class="bg-circle"></div>
     </div>
 
-    <!-- Header -->
     <header class="header">
         <nav class="nav-container">
             <div class="logo" onclick="showPage('home')">IntelliQuiz</div>
@@ -520,7 +541,6 @@
         </nav>
     </header>
 
-    <!-- Home Page -->
     <section id="home" class="page-section active">
         <div class="home-section">
             <h1 class="hero-title floating">Welcome to IntelliQuiz</h1>
@@ -530,7 +550,6 @@
             </p>
 
             <div class="role-cards">
-                <!-- Teacher Card -->
                 <div class="role-card" onclick="selectRole('teacher')">
                     <div class="role-icon teacher-icon">🎓</div>
                     <h2 class="role-title">I am a Teacher</h2>
@@ -547,7 +566,6 @@
                     <a href="{{ url_for('auth.login', role='teacher') }}"><button class="role-button">Get Started as Teacher</button></a>
                 </div>
 
-                <!-- Student Card -->
                 <div class="role-card" onclick="selectRole('student')">
                     <div class="role-icon student-icon">👥</div>
                     <h2 class="role-title">I am a Student</h2>
@@ -562,9 +580,23 @@
                     </ul>
                     <a href="{{ url_for('auth.login', role='student') }}"><button class="role-button">Get Started as Student</button></a>
                 </div>
+
+                <div class="role-card" onclick="selectRole('admin')">
+                    <div class="role-icon admin-icon">⚙️</div>
+                    <h2 class="role-title">I am an Admin</h2>
+                    <p class="role-description">
+                        Manage user accounts, oversee system settings, and access administrative tools for platform maintenance.
+                    </p>
+                    <ul class="role-features">
+                        <li>User account management</li>
+                        <li>System configuration</li>
+                        <li>Content moderation tools</li>
+                        <li>Platform analytics</li>
+                    </ul>
+                    <a href="{{ url_for('auth.login', role='admin') }}"><button class="admin-button">Get Started as Admin</button></a>
+                </div>
             </div>
 
-            <!-- Platform Features Preview -->
             <div class="features-preview">
                 <h2 style="color: white; font-size: 2.5rem; margin-bottom: 2rem; font-weight: 600;">Why Choose IntelliQuiz?</h2>
                 <div class="features-grid">
@@ -585,10 +617,8 @@
         </div>
     </section>
 
-    <!-- Features Page -->
     <section id="features" class="page-section">
         <div class="section-container">
-            <!-- <h1 class="page-title">Platform Features</h1> -->
             <div class="page-content">
                 <div class="feature-list">
                     <div class="feature-item">
@@ -599,14 +629,6 @@
                         <h3>🗣️ AI Viva Examinations</h3>
                         <p>Conduct interactive oral examinations with AI assistance. Natural language processing enables dynamic questioning and real-time evaluation of student responses.</p>
                     </div>
-                    <!-- <div class="feature-item">
-                        <h3>📈 Advanced Analytics</h3>
-                        <p>Comprehensive performance tracking with detailed reports, learning analytics, and personalized recommendations for both teachers and students.</p>
-                    </div> -->
-                    <!-- <div class="feature-item">
-                        <h3>🔒 Secure Platform</h3>
-                        <p>Enterprise-grade security with encrypted data transmission, secure user authentication, and privacy-compliant data handling.</p>
-                    </div> -->
                     <div class="feature-item">
                         <h3>📱 Multi-Device Support</h3>
                         <p>Access the platform seamlessly across desktop, tablet, and mobile devices with responsive design and offline capabilities.</p>
@@ -620,10 +642,8 @@
         </div>
     </section>
 
-    <!-- About Page -->
     <section id="about" class="page-section">
         <div class="section-container">
-            <!-- <h1 class="page-title">About IntelliQuiz</h1> -->
             <div class="page-content">
                 <h2 style="color: #4285f4; margin-bottom: 2rem; font-size: 2rem;">Our Mission</h2>
                 <p style="font-size: 1.2rem; line-height: 1.8; margin-bottom: 3rem; color: #555;">
@@ -664,10 +684,8 @@
         </div>
     </section>
 
-    <!-- Help Page -->
     <section id="help" class="page-section">
         <div class="section-container">
-            <!-- <h1 class="page-title">Help & Support</h1> -->
             <div class="page-content">
                 <h2 style="color: #4285f4; margin-bottom: 2rem;">Getting Started</h2>
                 
@@ -709,10 +727,8 @@
         </div>
     </section>
 
-    <!-- Contact Page -->
     <section id="contact" class="page-section">
         <div class="section-container">
-            <!-- <h1 class="page-title">Contact Us</h1> -->
             <div class="page-content">
                 <h2 style="color: #4285f4; margin-bottom: 2rem; text-align: center;">Get in Touch</h2>
                 <p style="text-align: center; margin-bottom: 3rem; color: #666; font-size: 1.1rem;">
@@ -806,6 +822,9 @@
                         break;
                     case 'student':
                         alert('Redirecting to Student Portal...\n\nFeatures:\n• Join quiz sessions\n• Take practice tests\n• View your progress\n• AI viva practice\n• Instant feedback');
+                        break;
+                    case 'admin':
+                        alert('Redirecting to Admin Dashboard...\n\nFeatures:\n• Manage users\n• System configuration\n• Content moderation\n• Platform analytics');
                         break;
                 }
             }, 150);

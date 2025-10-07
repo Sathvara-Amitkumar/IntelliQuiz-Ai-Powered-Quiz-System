@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background-color: var(--slate-100);">
+    <div class="auth-page">
+        <div class="card auth-card animate-fade-in" style="border:2px solid var(--primary-200); box-shadow:0 8px 24px rgba(2,132,199,0.08); border-radius:1rem;">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary" style="position: absolute; top: 1.5rem; left: 1.5rem;">&larr; Back</a>
+            <h2 style="margin-top: 2rem;">Edit User: {{ user.username }}</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'success' %}
+                            <div class="success-message" style="margin-bottom: 1.5rem;">{{ message }}</div>
+                        {% else %}
+                            <div class="error-message" style="margin-bottom: 1.5rem;">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" value="{{ user.username }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" name="role" required onchange="toggleRoleFields(this.value)">
+                        <option value="student" {% if user.role == 'student' %}selected{% endif %}>Student</option>
+                        <option value="teacher" {% if user.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                </div>
+
+                <div id="student-fields" class="form-group">
+                    <label for="enrollment">Enrollment Number</label>
+                    <input type="text" id="enrollment" name="enrollment" value="{{ user.enrollment if user.role == 'student' else '' }}">
+                </div>
+                
+                <div id="teacher-fields" class="form-group">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" value="{{ user.department if user.role == 'teacher' else '' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Leave blank to keep current password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Update User</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleRoleFields(role) {
+            const studentFields = document.getElementById('student-fields');
+            const teacherFields = document.getElementById('teacher-fields');
+            
+            if (role === 'student') {
+                studentFields.style.display = 'block';
+                teacherFields.style.display = 'none';
+            } else if (role === 'teacher') {
+                studentFields.style.display = 'none';
+                teacherFields.style.display = 'block';
+            } else { // admin
+                studentFields.style.display = 'none';
+                teacherFields.style.display = 'none';
+            }
+        }
+
+        // Set initial state based on current user's role
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleRoleFields(document.getElementById('role').value);
+        });
+    </script>
+</body>
+</html>

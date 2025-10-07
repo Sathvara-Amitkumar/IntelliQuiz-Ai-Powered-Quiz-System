@@ -1,4 +1,4 @@
-# app.py - Final Version with New UI Logic
+# app.py - Final Version with Admin Panel Logic
 
 import os
 import sqlite3
@@ -8,9 +8,16 @@ import random
 import time
 import string
 import sys
+import csv
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 
-from flask import request, jsonify
+from dotenv import load_dotenv
+load_dotenv()
+
+from flask import request, jsonify, send_file
 import google.oauth2.id_token
 import google.auth.transport.requests
 
@@ -26,6 +33,8 @@ from flask import (
 )
 from dotenv import load_dotenv
 from utils.session_store import SessionStore
+from werkzeug.exceptions import HTTPException
+from flask import make_response
 
 load_dotenv()
 
@@ -137,14 +146,67 @@ def init_app_commands(app):
                     print(f"Fatal error: Could not reinitialize database: {e}")
                     raise
 
-# --- Groq AI Functions ---
+# --- Email Functions ---
+def send_student_email(to_email, username, password):
+    # Get email configuration from .env
+    smtp_server = os.getenv("MAIL_SERVER")
+    smtp_port = int(os.getenv("MAIL_PORT"))
+    sender_email = os.getenv("MAIL_USERNAME")
+    sender_password = os.getenv("MAIL_PASSWORD")
 
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Your IntelliQuiz Account details"
+    message["From"] = f'"IntelliQuiz" <{sender_email}>'
+    message["To"] = to_email
+
+    text = f"""
+    Hello {username},
+
+    Your IntelliQuiz account has been created.
+    You can log in with the following credentials:
+
+    Username: {username}
+    Password: {password}
+
+    Please keep these credentials secure.
+    """
+    html = f"""
+    <html>
+        <body>
+            <p>Hello {username},</p>
+            <p>Your IntelliQuiz account has been created.</p>
+            <p>You can log in with the following credentials:</p>
+            <ul>
+                <li><b>Username:</b> {to_email}</li>
+                <li><b>Password:</b> {password}</li>
+            </ul>
+            <p>Please keep these credentials secure.</p>
+        </body>
+    </html>
+    """
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+    # message.attach(part1)
+    message.attach(part2)
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls(context=context)
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, to_email, message.as_string())
+        return True
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return False
 
 # --- Blueprints & Auth ---
 bp_main = Blueprint('main', __name__, url_prefix='/')
 bp_auth = Blueprint('auth', __name__, url_prefix='/auth')
 bp_teacher = Blueprint('teacher', __name__, url_prefix='/teacher')
 bp_student = Blueprint('student', __name__, url_prefix='/student')
+bp_admin = Blueprint('admin', __name__, url_prefix='/admin')
+
 
 # --- FIXED LOGIN DECORATOR ---
 def login_required(view):
@@ -159,10 +221,35 @@ def login_required(view):
         return view(**kwargs)
     return wrapped_view
 
+# --- NEW: ADMIN REQUIRED DECORATOR ---
+def admin_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if 'user_id' not in session or session.get('role') != 'admin':
+            flash('Permission denied. Admin access is required.', 'error')
+            return redirect(url_for('main.index'))
+        return view(**kwargs)
+    return wrapped_view
+
+# --- NEW: DECORATOR FOR TEACHER OR ADMIN ACCESS ---
+def teacher_or_admin_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if 'user_id' not in session or (session.get('role') != 'teacher' and session.get('role') != 'admin'):
+            flash('Permission denied. Admin or Teacher access is required.', 'error')
+            return redirect(url_for('main.index'))
+        return view(**kwargs)
+    return wrapped_view
+
+
 @bp_main.route('/')
 def index():
     if 'user_id' in session:
-        return redirect(url_for(f"{session['role']}.dashboard"))
+        role = session.get('role')
+        if role == 'teacher' or role == 'student':
+            return redirect(url_for(f"{role}.dashboard"))
+        elif role == 'admin':
+            return redirect(url_for("admin.dashboard"))
     return render_template('index.html')
 
 # ------------------------------------------------------------------------
@@ -218,7 +305,7 @@ def google_login(role):
 # --- Authentication Routes ---
 @bp_auth.route('/login/<role>', methods=('GET', 'POST'))
 def login(role):
-    if role not in ['teacher', 'student']:
+    if role not in ['teacher', 'student', 'admin']:
         return redirect(url_for('main.index'))
     if request.method == 'POST':
         username = request.form['username']
@@ -226,19 +313,29 @@ def login(role):
         remember_me = request.form.get('remember_me', False)
         db = get_db()
         user = db.execute('SELECT * FROM users WHERE username = ? AND password = ? AND role = ?', (username, password, role)).fetchone()
+        
         if user:
-            # Check for duplicate login (active session)
             ip = request.remote_addr
-            recent_login = db.execute('SELECT ip FROM activity_log WHERE student_id = ? AND action = "login" ORDER BY timestamp DESC LIMIT 1', (user['id'],)).fetchone()
-            if session.get('user_id') == user['id']:
-                flash('Duplicate login detected. You are already logged in elsewhere.')
-                return redirect(url_for('main.index'))
-            if recent_login and recent_login['ip'] != ip:
-                db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-                           (user['id'], None, 'multi_login_ip', ip, int(time.time())))
-                db.commit()
             
-            # Store credentials in encrypted file for persistence
+            try:
+                db.execute('BEGIN IMMEDIATE')
+                recent_login = db.execute('SELECT ip FROM activity_log WHERE student_id = ? AND action = "login" ORDER BY timestamp DESC LIMIT 1', (user['id'],)).fetchone()
+                
+                if session.get('user_id') == user['id']:
+                    flash('Duplicate login detected. You are already logged in elsewhere.')
+                    db.rollback() 
+                    return redirect(url_for('main.index'))
+                if recent_login and recent_login['ip'] != ip:
+                    db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
+                               (user['id'], None, 'multi_login_ip', ip, int(time.time())))
+                
+                db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
+                           (user['id'], None, 'login', ip, int(time.time())))
+                db.commit()
+            except sqlite3.OperationalError as e:
+                db.rollback()
+                print(f"Warning: Failed to log login attempt due to locked database: {e}")
+            
             session_store = SessionStore(current_app.instance_path)
             session_store.store_user_session(user['id'], user['username'], user['role'], password)
             
@@ -248,40 +345,26 @@ def login(role):
             session['role'] = user['role']
             session['username'] = user['username']
             
+            return redirect(url_for(f"{role}.dashboard"))
+            
+        else:
+            ip = request.remote_addr
             try:
-                db.execute('BEGIN IMMEDIATE')  # Get immediate lock
                 db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-                           (user['id'], None, 'login', ip, int(time.time())))
+                    (None, None, 'failed_login', ip, int(time.time())))
                 db.commit()
             except sqlite3.OperationalError as e:
                 db.rollback()
-                if 'database is locked' in str(e):
-                    # Wait and retry once
-                    time.sleep(1)
-                    try:
-                        db.execute('BEGIN IMMEDIATE')
-                        db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-                                   (user['id'], None, 'login', ip, int(time.time())))
-                        db.commit()
-                    except sqlite3.Error as e2:
-                        db.rollback()
-                        print(f"Failed to log login after retry: {e2}")
-                        # Continue anyway since the user is authenticated
-                else:
-                    raise
-            return redirect(url_for(f"{role}.dashboard"))
+                print(f"Warning: Failed to log failed login attempt due to locked database: {e}")
             
-        # Track failed login attempts only on failed POST
-        ip = request.remote_addr
-        db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-               (None, None, 'failed_login', ip, int(time.time())))
-        db.commit()
-        flash('Invalid credentials or incorrect role.')
+            flash('Invalid credentials or incorrect role.')
+            return render_template('login.html', role=role)
+    
     return render_template('login.html', role=role)
 
 @bp_auth.route('/signup/<role>', methods=('GET', 'POST'))
 def signup(role):
-    if role not in ['teacher', 'student']:
+    if role not in ['teacher', 'student', 'admin']:
         return redirect(url_for('main.index'))
     if request.method == 'POST':
         username = request.form['username']
@@ -323,7 +406,7 @@ def dashboard():
         recent_activity.append(f"Created quiz '{q['title']}' on {q['created_at']}")
     students = db.execute('SELECT id, username FROM users WHERE role = "student"').fetchall()
     # Suspicious activity log for teacher
-    suspicious_logs = db.execute('SELECT a.student_id, u.username, a.quiz_id, q.title, a.action, a.timestamp FROM activity_log a JOIN users u ON a.student_id = u.id JOIN quizzes q ON a.quiz_id = q.id WHERE a.action IN ("plagiarism_detected", "tab_switch", "rapid_change", "js_disabled", "unusual_pattern") ORDER BY a.timestamp DESC LIMIT 20').fetchall()
+    suspicious_logs = db.execute('SELECT a.student_id, u.username, a.quiz_id, q.title, a.action, a.timestamp FROM activity_log a JOIN users u ON a.student_id = u.id JOIN quizzes q ON a.quiz_id = q.id WHERE a.action IN ("plagiarism_detected", "tab_switch", "unusual_pattern") ORDER BY a.timestamp DESC LIMIT 20').fetchall()
     # Student performance analytics
     student_performance = []
     for student in students:
@@ -362,13 +445,13 @@ def dashboard():
 
 # --- Teacher: Create Quiz (GET) ---
 @bp_teacher.route('/create')
-@login_required
+@teacher_or_admin_required # NEW: Use the new decorator
 def create_quiz():
     return render_template('create_quiz.html')
 
 # --- Teacher: Preview Generated Questions (POST) ---
 @bp_teacher.route('/preview', methods=['POST'])
-@login_required
+@teacher_or_admin_required # NEW: Use the new decorator
 def preview_generated_questions():
     data = request.form
     if not data:
@@ -631,9 +714,9 @@ def preview_generated_questions():
 def quiz_details(quiz_id):
     db = get_db()
     quiz = db.execute(
-        'SELECT q.*, COUNT(qu.id) as question_count FROM quizzes q LEFT JOIN questions qu ON q.id = qu.quiz_id WHERE q.id = ? AND q.teacher_id = ?',
-        (quiz_id, session['user_id'])
-    ).fetchone()
+        'SELECT q.*, COUNT(qu.id) as question_count FROM quizzes q LEFT JOIN questions qu ON q.id = qu.quiz_id WHERE q.id = ? AND q.teacher_id = ? GROUP BY q.id ORDER BY q.created_at DESC',
+        (session['user_id'],)
+    ).fetchall()
     if not quiz: return redirect(url_for('teacher.dashboard'))
     
     results = db.execute(
@@ -768,6 +851,138 @@ def quiz_result(result_id):
         })
     return render_template('quiz_result.html', result=result, solution=solution)
 
+# --- Admin Routes ---
+@bp_admin.route('/dashboard')
+@admin_required
+def dashboard():
+    db = get_db()
+    # Fetch all users, including their password for display
+    users = db.execute('SELECT id, username, email, password, role FROM users ORDER BY role, username').fetchall()
+    return render_template('admin_dashboard.html', users=users, username=session.get('username'))
+
+@bp_admin.route('/create_user', methods=('GET', 'POST'))
+@admin_required
+def create_user():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        # --- FIX: Generate a random password for the new user ---
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        role = request.form['role']
+        db = get_db()
+        try:
+            db.execute(
+                "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)",
+                (username, email, password, role)
+            )
+            db.commit()
+            
+            if role == 'student':
+                # Send email to student
+                email_sent = send_student_email(email, username, password)
+                if email_sent:
+                    flash(f'User created successfully! Password sent to {email}.', 'success')
+                else:
+                    flash(f'User created successfully, but failed to send email. Password: {password}', 'error')
+            else:
+                flash(f'User created successfully! Password: {password}', 'success')
+
+            return redirect(url_for('admin.dashboard'))
+        except sqlite3.IntegrityError:
+            flash(f"User '{username}' or email '{email}' already exists.", 'error')
+    return render_template('create_user.html')
+
+@bp_admin.route('/edit_user/<int:user_id>', methods=('GET', 'POST'))
+@admin_required
+def edit_user(user_id):
+    db = get_db()
+    user = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form['role']
+        try:
+            db.execute(
+                "UPDATE users SET username = ?, email = ?, password = ?, role = ? WHERE id = ?",
+                (username, email, password, role, user_id)
+            )
+            db.commit()
+            flash('User updated successfully!', 'success')
+            return redirect(url_for('admin.dashboard'))
+        except sqlite3.IntegrityError:
+            flash(f"Username '{username}' or email '{email}' already exists.", 'error')
+
+    return render_template('edit_user.html', user=user)
+
+@bp_admin.route('/delete_user/<int:user_id>', methods=('POST',))
+@admin_required
+def delete_user(user_id):
+    db = get_db()
+    try:
+        db.execute('DELETE FROM users WHERE id = ?', (user_id,))
+        db.commit()
+        flash('User deleted successfully.', 'success')
+    except sqlite3.Error as e:
+        flash(f'Error deleting user: {e}', 'error')
+    return redirect(url_for('admin.dashboard'))
+
+# --- NEW FEATURE: Import students from CSV ---
+@bp_admin.route('/api/import_users', methods=['POST'])
+@admin_required
+def import_users():
+    uploaded_file = request.files['file']
+    if not uploaded_file or uploaded_file.filename == '' or not uploaded_file.filename.endswith('.csv'):
+        return jsonify({'error': 'Invalid file. Please upload a CSV file.'}), 400
+
+    new_users_passwords = []
+    
+    # Process the CSV file
+    csv_file = uploaded_file.stream.read().decode('utf-8')
+    csv_reader = csv.reader(csv_file.splitlines())
+    
+    # Skip header row
+    next(csv_reader)
+    
+    db = get_db()
+    db.execute('BEGIN IMMEDIATE')
+    try:
+        for row in csv_reader:
+            if len(row) < 3:
+                continue # Skip invalid rows
+            
+            username = row[0].strip()
+            email = row[1].strip()
+            role = row[2].strip().lower()
+
+            # Automatically generate password
+            password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+
+            db.execute(
+                "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)",
+                (username, email, password, role)
+            )
+            # Send email for student accounts
+            if role == 'student':
+                email_sent = send_student_email(email, username, password)
+                if not email_sent:
+                    flash(f"Warning: Failed to send email to {email}.", 'warning')
+            
+            new_users_passwords.append({'username': username, 'password': password})
+
+        db.commit()
+        return jsonify({'message': f'Successfully imported {len(new_users_passwords)} users.'})
+    except sqlite3.IntegrityError:
+        db.rollback()
+        return jsonify({'error': 'A user with that username or email already exists. Import aborted.'}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'An error occurred during import: {e}'}), 500
+
 # --- API Routes ---
 def generate_unique_room_code(db):
     while True:
@@ -822,9 +1037,6 @@ def api_finalize_quiz():
         return jsonify({'error': f'Database error: {e}'}), 500
 
 # --- Global error handler for API routes to always return JSON ---
-from werkzeug.exceptions import HTTPException
-from flask import make_response
-
 def is_api_request():
     path = request.path
     return (
@@ -1103,7 +1315,7 @@ def log_suspicious_js():
                (session.get('user_id'), quiz_id, 'js_disabled', ip, timestamp))
     db.commit()
     # Return a 1x1 transparent gif
-    from flask import send_file
+    from flask import send_from_directory
     import io
     gif = b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
     return send_file(io.BytesIO(gif), mimetype='image/gif')
@@ -1182,6 +1394,7 @@ def create_app():
     app.register_blueprint(bp_auth)
     app.register_blueprint(bp_teacher)
     app.register_blueprint(bp_student)
+    app.register_blueprint(bp_admin)
 
     # Register custom Jinja filter for datetime
     from datetime import datetime
