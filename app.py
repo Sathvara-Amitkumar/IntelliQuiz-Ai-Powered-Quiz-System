@@ -147,7 +147,7 @@ def init_app_commands(app):
                     raise
 
 # --- Email Functions ---
-def send_student_email(to_email, username, password):
+def send_email(to_email, subject, html_content):
     # Get email configuration from .env
     smtp_server = os.getenv("MAIL_SERVER")
     smtp_port = int(os.getenv("MAIL_PORT"))
@@ -155,21 +155,26 @@ def send_student_email(to_email, username, password):
     sender_password = os.getenv("MAIL_PASSWORD")
 
     message = MIMEMultipart("alternative")
-    message["Subject"] = "Your IntelliQuiz Account details"
+    message["Subject"] = subject
     message["From"] = f'"IntelliQuiz" <{sender_email}>'
     message["To"] = to_email
 
-    text = f"""
-    Hello {username},
+    part = MIMEText(html_content, "html")
+    message.attach(part)
 
-    Your IntelliQuiz account has been created.
-    You can log in with the following credentials:
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls(context=context)
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, to_email, message.as_string())
+        return True
+    except Exception as e:
+        print(f"Failed to send email to {to_email}: {e}")
+        return False
 
-    Username: {username}
-    Password: {password}
-
-    Please keep these credentials secure.
-    """
+def send_student_email(to_email, username, password):
+    subject = "Your IntelliQuiz Account details"
     html = f"""
     <html>
         <body>
@@ -184,21 +189,7 @@ def send_student_email(to_email, username, password):
         </body>
     </html>
     """
-    part1 = MIMEText(text, "plain")
-    part2 = MIMEText(html, "html")
-    # message.attach(part1)
-    message.attach(part2)
-
-    try:
-        context = ssl.create_default_context()
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls(context=context)
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, to_email, message.as_string())
-        return True
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-        return False
+    return send_email(to_email, subject, html)
 
 # --- Blueprints & Auth ---
 bp_main = Blueprint('main', __name__, url_prefix='/')
@@ -303,64 +294,100 @@ def google_login(role):
 # -------------------------------------------------------------------------
 
 # --- Authentication Routes ---
-@bp_auth.route('/login/<role>', methods=('GET', 'POST'))
-def login(role):
-    if role not in ['teacher', 'student', 'admin']:
-        return redirect(url_for('main.index'))
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        remember_me = request.form.get('remember_me', False)
-        db = get_db()
-        user = db.execute('SELECT * FROM users WHERE username = ? AND password = ? AND role = ?', (username, password, role)).fetchone()
+# @bp_auth.route('/login/<role>', methods=('GET', 'POST'))
+# def login(role):
+#     if role not in ['teacher', 'student', 'admin']:
+#         return redirect(url_for('main.index'))
+#     if request.method == 'POST':
+#         username = request.form['username']
+#         password = request.form['password']
+#         remember_me = request.form.get('remember_me', False)
+#         db = get_db()
+#         user = db.execute('SELECT * FROM users WHERE username = ? AND password = ? AND role = ?', (username, password, role)).fetchone()
         
-        if user:
-            ip = request.remote_addr
+#         if user:
+#             ip = request.remote_addr
             
-            try:
-                db.execute('BEGIN IMMEDIATE')
-                recent_login = db.execute('SELECT ip FROM activity_log WHERE student_id = ? AND action = "login" ORDER BY timestamp DESC LIMIT 1', (user['id'],)).fetchone()
+#             try:
+#                 db.execute('BEGIN IMMEDIATE')
+#                 recent_login = db.execute('SELECT ip FROM activity_log WHERE student_id = ? AND action = "login" ORDER BY timestamp DESC LIMIT 1', (user['id'],)).fetchone()
                 
-                if session.get('user_id') == user['id']:
-                    flash('Duplicate login detected. You are already logged in elsewhere.')
-                    db.rollback() 
-                    return redirect(url_for('main.index'))
-                if recent_login and recent_login['ip'] != ip:
-                    db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-                               (user['id'], None, 'multi_login_ip', ip, int(time.time())))
+#                 if session.get('user_id') == user['id']:
+#                     flash('Duplicate login detected. You are already logged in elsewhere.')
+#                     db.rollback() 
+#                     return redirect(url_for('main.index'))
+#                 if recent_login and recent_login['ip'] != ip:
+#                     db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
+#                                (user['id'], None, 'multi_login_ip', ip, int(time.time())))
                 
-                db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-                           (user['id'], None, 'login', ip, int(time.time())))
-                db.commit()
-            except sqlite3.OperationalError as e:
-                db.rollback()
-                print(f"Warning: Failed to log login attempt due to locked database: {e}")
+#                 db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
+#                            (user['id'], None, 'login', ip, int(time.time())))
+#                 db.commit()
+#             except sqlite3.OperationalError as e:
+#                 db.rollback()
+#                 print(f"Warning: Failed to log login attempt due to locked database: {e}")
             
-            session_store = SessionStore(current_app.instance_path)
-            session_store.store_user_session(user['id'], user['username'], user['role'], password)
+#             session_store = SessionStore(current_app.instance_path)
+#             session_store.store_user_session(user['id'], user['username'], user['role'], password)
             
-            session.clear()
-            session.permanent = remember_me
-            session['user_id'] = user['id']
-            session['role'] = user['role']
-            session['username'] = user['username']
+#             session.clear()
+#             session.permanent = remember_me
+#             session['user_id'] = user['id']
+#             session['role'] = user['role']
+#             session['username'] = user['username']
             
-            return redirect(url_for(f"{role}.dashboard"))
+#             return redirect(url_for(f"{role}.dashboard"))
             
-        else:
-            ip = request.remote_addr
-            try:
-                db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-                    (None, None, 'failed_login', ip, int(time.time())))
-                db.commit()
-            except sqlite3.OperationalError as e:
-                db.rollback()
-                print(f"Warning: Failed to log failed login attempt due to locked database: {e}")
+#         else:
+#             ip = request.remote_addr
+#             try:
+#                 db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
+#                     (None, None, 'failed_login', ip, int(time.time())))
+#                 db.commit()
+#             except sqlite3.OperationalError as e:
+#                 db.rollback()
+#                 print(f"Warning: Failed to log failed login attempt due to locked database: {e}")
             
-            flash('Invalid credentials or incorrect role.')
-            return render_template('login.html', role=role)
+#             flash('Invalid credentials or incorrect role.')
+#             return render_template('login.html', role=role)
     
-    return render_template('login.html', role=role)
+#     return render_template('login.html', role=role)
+
+@bp_auth.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    password = request.form['password']
+    role = request.form.get('role')
+
+    if not role:
+        flash('Please select a role to log in.', 'error')
+        return redirect(url_for('main.index'))
+
+    db = get_db()
+    user = None
+
+    # Handle hardcoded admin login
+    if role == 'admin':
+        admin_user_env = os.getenv('ADMIN_USERNAME')
+        admin_pass_env = os.getenv('ADMIN_PASSWORD')
+        if username == admin_user_env and password == admin_pass_env:
+            user = db.execute('SELECT * FROM users WHERE username = ? AND role = "admin"', (username,)).fetchone()
+    # Handle student and teacher login from the database
+    else:
+        user = db.execute('SELECT * FROM users WHERE email = ? AND password = ? AND role = ?', (username, password, role)).fetchone()
+
+    # If login is successful, create the session
+    if user:
+        session.clear()
+        session['user_id'] = user['id']
+        session['role'] = user['role']
+        session['username'] = user['username']
+        # Redirect to the correct dashboard
+        return redirect(url_for(f"{role}.dashboard"))
+    else:
+        # If login fails
+        flash('Invalid credentials or incorrect role.', 'danger')
+        return redirect(url_for('main.index'))
 
 @bp_auth.route('/signup/<role>', methods=('GET', 'POST'))
 def signup(role):
@@ -852,13 +879,60 @@ def quiz_result(result_id):
     return render_template('quiz_result.html', result=result, solution=solution)
 
 # --- Admin Routes ---
+# @bp_admin.route('/dashboard')
+# @admin_required
+# def dashboard():
+#     db = get_db()
+#     # Fetch all users, including their password for display
+#     users = db.execute('SELECT id, username, email, password, role FROM users ORDER BY role, username').fetchall()
+#     return render_template('admin_dashboard.html', users=users, username=session.get('username'))
+
 @bp_admin.route('/dashboard')
 @admin_required
 def dashboard():
     db = get_db()
-    # Fetch all users, including their password for display
-    users = db.execute('SELECT id, username, email, password, role FROM users ORDER BY role, username').fetchall()
-    return render_template('admin_dashboard.html', users=users, username=session.get('username'))
+    # Fetch data for the new dashboard
+    student_count = db.execute("SELECT COUNT(id) FROM users WHERE role = 'student'").fetchone()[0]
+    teacher_count = db.execute("SELECT COUNT(id) FROM users WHERE role = 'teacher'").fetchone()[0]
+    students = db.execute("SELECT id, username, email, password FROM users WHERE role = 'student' ORDER BY username").fetchall()
+    teachers = db.execute("SELECT id, username, email, password FROM users WHERE role = 'teacher' ORDER BY username").fetchall()
+    
+    return render_template(
+        'admin_dashboard_new.html', 
+        username=session.get('username'),
+        student_count=student_count,
+        teacher_count=teacher_count,
+        students=students,
+        teachers=teachers
+    )
+
+@bp_admin.route('/refresh_passwords/<string:role>', methods=['POST'])
+@admin_required
+def refresh_passwords(role):
+    if role not in ['student', 'teacher']:
+        flash('Invalid user role specified.', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    db = get_db()
+    users_to_update = db.execute("SELECT id FROM users WHERE role = ?", (role,)).fetchall()
+
+    if not users_to_update:
+        flash(f'No {role}s found to update.', 'warning')
+        return redirect(url_for('admin.dashboard'))
+    
+    updated_count = 0
+    try:
+        for user in users_to_update:
+            new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+            db.execute("UPDATE users SET password = ? WHERE id = ?", (new_password, user['id']))
+            updated_count += 1
+        db.commit()
+        flash(f'Successfully refreshed passwords for {updated_count} {role}(s).', 'success')
+    except sqlite3.Error as e:
+        db.rollback()
+        flash(f'An error occurred while refreshing passwords: {e}', 'error')
+
+    return redirect(url_for('admin.dashboard'))
 
 @bp_admin.route('/create_user', methods=('GET', 'POST'))
 @admin_required
@@ -867,7 +941,7 @@ def create_user():
         username = request.form['username']
         email = request.form['email']
         # --- FIX: Generate a random password for the new user ---
-        password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         role = request.form['role']
         db = get_db()
         try:
@@ -929,6 +1003,56 @@ def delete_user(user_id):
         flash('User deleted successfully.', 'success')
     except sqlite3.Error as e:
         flash(f'Error deleting user: {e}', 'error')
+    return redirect(url_for('admin.dashboard'))
+
+# Sending Mail to all---------------------------------------------------
+@bp_admin.route('/send_mail', methods=['POST'])
+@admin_required
+def send_mail_route():
+    recipient_type = request.form.get('recipient')
+    specific_user_email = request.form.get('specific_user_email')
+
+    if not recipient_type:
+        flash('Recipient type is required.', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    db = get_db()
+    users_to_email = []
+
+    if recipient_type == 'all_students':
+        users = db.execute("SELECT email, username, password FROM users WHERE role = 'student'").fetchall()
+        users_to_email.extend(users)
+    elif recipient_type == 'all_teachers':
+        users = db.execute("SELECT email, username, password FROM users WHERE role = 'teacher'").fetchall()
+        users_to_email.extend(users)
+    elif recipient_type == 'specific_user':
+        if not specific_user_email:
+            flash('Email is required for a specific user.', 'error')
+            return redirect(url_for('admin.dashboard'))
+        user = db.execute("SELECT email, username, password FROM users WHERE email = ?", (specific_user_email,)).fetchone()
+        if user:
+            users_to_email.append(user)
+        else:
+            flash(f'No user found with email: {specific_user_email}', 'error')
+            return redirect(url_for('admin.dashboard'))
+    else:
+        flash('Invalid recipient selected.', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    if not users_to_email:
+        flash('No recipients found to send credentials to.', 'warning')
+        return redirect(url_for('admin.dashboard'))
+
+    success_count = 0
+    for user in users_to_email:
+        if send_student_email(user['email'], user['username'], user['password']):
+            success_count += 1
+
+    if success_count > 0:
+        flash(f'Successfully sent credentials to {success_count} user(s).', 'success')
+    else:
+        flash('Failed to send any credential emails.', 'error')
+
     return redirect(url_for('admin.dashboard'))
 
 # --- NEW FEATURE: Import students from CSV ---
@@ -1387,6 +1511,21 @@ def create_app():
                 print("Database schema ensured on startup.")
             except Exception as e:
                 print(f"Error ensuring database schema: {e}")
+    # -------------------------------/connected-------------------------------------
+    with app.app_context():
+        db = get_db()
+        admin_user = os.getenv('ADMIN_USERNAME')
+        admin_pass = os.getenv('ADMIN_PASSWORD')
+        if admin_user and admin_pass:
+            existing_admin = db.execute('SELECT id FROM users WHERE username = ? AND role = "admin"', (admin_user,)).fetchone()
+            if not existing_admin:
+                try:
+                    db.execute('INSERT INTO users (username, password, role, email) VALUES (?, ?, "admin", ?)', 
+                               (admin_user, admin_pass, "admin@intelliquiz.local"))
+                    db.commit()
+                    print(f"Admin user '{admin_user}' created successfully.")
+                except sqlite3.IntegrityError:
+                    print(f"Admin user '{admin_user}' already exists.")
     
     # Remove global Groq client; only use if API key is present in .env
 

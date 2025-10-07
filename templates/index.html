@@ -2,897 +2,208 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI QuizMaster - Home</title>
+    <title>Welcome to IntelliQuiz</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --color-primary: #7367F0;
+            --color-white: #ffffff;
+            --color-light-grey: #F8F7FA;
+            --color-dark: #2C2A3A;
+            --color-dark-grey: #5E5873;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--color-light-grey); color: var(--color-dark-grey); margin: 0; padding: 0; }
 
-        /* Header */
+        /* --- Animated Background --- */
+        .background-shapes { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden; z-index: -1; }
+        .circle { position: absolute; border-radius: 50%; background: linear-gradient(45deg, var(--color-primary), #a29dff); opacity: 0.15; transition: transform 0.2s ease-out; }
+
+        /* --- FIXED HEADER --- */
         .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1.5rem 3rem;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(45deg, #4285f4, #9c27b0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            cursor: pointer;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            font-size: 20px;
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            cursor: pointer;
-        }
-
-        .nav-links a:hover {
-            background: rgba(66, 133, 244, 0.1);
-            color: #4285f4;
-            transform: translateY(-2px);
-        }
-
-        .nav-links a.active {
-            background: linear-gradient(45deg, #4285f4, #9c27b0);
-            color: white;
-        }
-
-        /* Page Sections */
-        .page-section {
-            display: none;
-            min-height: calc(100vh - 80px);
-            padding: 2rem;
-        }
-
-        .page-section.active {
-            display: block;
-        }
-
-        .section-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 0;
-        }
-
-        /* Home Page Styles */
-        .home-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 3rem 2rem;
-        }
-
-        .hero-title {
-            font-size: 4rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            color: white;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            line-height: 1.2;
-        }
-
-        .hero-subtitle {
-            font-size: 1.4rem;
-            color: rgba(255, 255, 255, 0.95);
-            margin-bottom: 3rem;
-            font-weight: 400;
-            line-height: 1.6;
-            max-width: 800px;
-        }
-
-        .role-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjusted to allow 3 columns on larger screens */
-            gap: 2rem;
-            margin: 3rem 0;
-            width: 100%;
-            max-width: 1200px; /* Increased max-width to fit 3 cards */
-        }
-        
-        .role-card {
-            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem 5%; /* Using percentage for better responsiveness */
+            background-color: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 3rem 2rem;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .role-card::before {
-            content: '';
-            position: absolute;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, #4285f4, #9c27b0);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: -1;
+            z-index: 1000;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
 
-        .role-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            border-color: rgba(66, 133, 244, 0.3);
-        }
+        .brand { font-size: 1.8rem; font-weight: 700; color: var(--color-dark); }
+        .brand span { color: var(--color-primary); }
 
-        .role-card:hover::before {
-            opacity: 0.05;
-        }
+        .header-nav { display: flex; align-items: center; gap: 2rem; }
+        .nav-links a { margin: 0 1rem; font-weight: 500; color: var(--color-dark-grey); text-decoration: none; position: relative; transition: color 0.3s ease; }
+        .nav-links a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 50%; background-color: var(--color-primary); transition: all 0.3s ease; }
+        .nav-links a:hover, .nav-links a.active { color: var(--color-primary); }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; left: 0; }
         
-        /* New styles for admin icon and button */
-        .admin-icon {
-            background: linear-gradient(45deg, #e53e3e, #8b5cf6); /* Red/purple gradient */
-        }
-        .admin-button {
-            background: linear-gradient(45deg, #e53e3e, #8b5cf6);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .admin-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(229, 62, 62, 0.4);
-        }
-        
-        .role-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: white;
-            transition: all 0.3s ease;
-        }
+        .btn-login { background-color: var(--color-primary); color: var(--color-white); padding: 0.8rem 1.8rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; white-space: nowrap; }
+        .btn-login:hover { background-color: #6158d6; box-shadow: 0 4px 15px rgba(115, 103, 240, 0.4); transform: translateY(-2px); }
 
-        .teacher-icon {
-            background: linear-gradient(45deg, #4285f4, #1976d2);
-        }
+        /* --- Hero Section --- */
+        .hero { text-align: center; padding: 8rem 2rem; position: relative; }
+        .hero h1 { font-size: 4rem; font-weight: 800; color: var(--color-dark); margin-bottom: 1rem; }
+        .hero h1 span { color: var(--color-primary); }
+        .hero p { font-size: 1.3rem; max-width: 700px; margin: 0 auto 2rem auto; color: var(--color-dark-grey); }
 
-        .student-icon {
-            background: linear-gradient(45deg, #12d55a, #24c6be);
-        }
+        /* --- Features Section --- */
+        .features { padding: 6rem 2rem; background-color: var(--color-white); }
+        .section-title { text-align: center; margin-bottom: 4rem; }
+        .section-title h2 { font-size: 2.5rem; font-weight: 700; color: var(--color-dark); }
+        .section-title p { font-size: 1.1rem; color: var(--color-dark-grey); }
 
-        .role-card:hover .role-icon {
-            transform: rotate(360deg) scale(1.1);
-        }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .feature-card { background: var(--color-light-grey); padding: 2.5rem; border-radius: 15px; text-align: center; border: 1px solid #eee; transition: all 0.3s ease; }
+        .feature-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.07); }
+        .feature-card .material-icons-sharp { font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem; }
+        .feature-card h3 { font-size: 1.4rem; font-weight: 600; color: var(--color-dark); margin-bottom: 0.5rem; }
 
-        .role-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 1rem;
-        }
-
-        .role-description {
-            color: #666;
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .role-features {
-            list-style: none;
-            text-align: left;
-            margin-bottom: 2rem;
-        }
-
-        .role-features li {
-            color: #555;
-            margin-bottom: 0.5rem;
-            padding-left: 1.5rem;
-            position: relative;
-        }
-
-        .role-features li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: #4285f4;
-            font-weight: bold;
-        }
-
-        .role-button {
-            background: linear-gradient(45deg, #4285f4, #9c27b0);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .role-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(66, 133, 244, 0.4);
-        }
-
-        /* Features Section on Home */
-        .features-preview {
-            margin-top: 4rem;
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 2rem 1.5rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .feature-card h3 {
-            color: white;
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
-        .feature-card p {
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.5;
-        }
-
-        /* Other Page Styles */
-        .page-title {
-            font-size: 3rem;
-            font-weight: 700;
-            color: white;
-            text-align: center;
-            margin-bottom: 3rem;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .page-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 3rem;
-            margin: 2rem auto;
-            max-width: 1000px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-
-        .feature-item {
-            background: #f8f9ff;
-            padding: 2rem;
-            border-radius: 15px;
-            border-left: 4px solid #4285f4;
-        }
-
-        .feature-item h3 {
-            color: #333;
-            margin-bottom: 1rem;
-            font-size: 1.4rem;
-        }
-
-        .feature-item p {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
-        }
-
-        .stat-card {
-            text-align: center;
-            background: linear-gradient(45deg, #4285f4, #9c27b0);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        /* Contact Form */
-        .contact-form {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .form-group {
-            margin-bottom: 2rem;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #4285f4;
-        }
-
-        .submit-btn {
-            background: linear-gradient(45deg, #4285f4, #9c27b0);
-            color: white;
-            border: none;
-            padding: 1rem 3rem;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(66, 133, 244, 0.4);
-        }
-
-        /* Animations */
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .floating {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        /* Background Decoration */
-        .bg-decoration {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .bg-circle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            animation: float 8s ease-in-out infinite;
-        }
-
-        .bg-circle:nth-child(1) {
-            width: 200px;
-            height: 200px;
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .bg-circle:nth-child(2) {
-            width: 150px;
-            height: 150px;
-            top: 60%;
-            right: 15%;
-            animation-delay: 2s;
-        }
-
-        .bg-circle:nth-child(3) {
-            width: 100px;
-            height: 100px;
-            bottom: 20%;
-            left: 20%;
-            animation-delay: 4s;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header {
-                padding: 1rem;
-            }
-
-            .nav-links {
-                gap: 1rem;
-            }
-
-            .nav-links a {
-                padding: 0.3rem 0.8rem;
-                font-size: 0.9rem;
-            }
-
-            .hero-title {
-                font-size: 2.8rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.2rem;
-            }
-
-            .role-cards {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            .role-card {
-                padding: 2rem 1.5rem;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .page-content {
-                padding: 2rem;
-                margin: 1rem;
-            }
-        }
+        /* --- Footer --- */
+        .footer { background: var(--color-dark); color: var(--color-light-grey); text-align: center; padding: 3rem 2rem; margin-top: 4rem; }
     </style>
 </head>
 <body>
-    <div class="bg-decoration">
-        <div class="bg-circle"></div>
-        <div class="bg-circle"></div>
-        <div class="bg-circle"></div>
-    </div>
+    <div class="background-shapes"></div>
 
     <header class="header">
-        <nav class="nav-container">
-            <div class="logo" onclick="showPage('home')">IntelliQuiz</div>
-            <ul class="nav-links">
-                <li><a onclick="showPage('home')" class="nav-link active">Home</a></li>
-                <li><a onclick="showPage('features')" class="nav-link">Features</a></li>
-                <li><a onclick="showPage('about')" class="nav-link">About</a></li>
-                <li><a onclick="showPage('help')" class="nav-link">Help</a></li>
-                <li><a onclick="showPage('contact')" class="nav-link">Contact</a></li>
-            </ul>
+        <div class="brand">Intelli<span>Quiz</span></div>
+        <nav class="header-nav">
+            <div class="nav-links">
+                <a href="#home" class="active">Home</a>
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+            </div>
+            <a href="#" class="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
         </nav>
     </header>
 
-    <section id="home" class="page-section active">
-        <div class="home-section">
-            <h1 class="hero-title floating">Welcome to IntelliQuiz</h1>
-            <p class="hero-subtitle">
-                The next-generation intelligent platform for creating, conducting, and taking quizzes and viva examinations. 
-                Powered by advanced AI to revolutionize learning and assessment experiences for educators and students worldwide.
-            </p>
+    <main>
+        <section id="home" class="hero">
+            <h1 data-aos="fade-down">Welcome to <span>IntelliQuiz</span></h1>
+            <p data-aos="fade-up" data-aos-delay="100">The modern, AI-powered platform for fair and secure examinations. Please log in to access your dashboard.</p>
+        </section>
 
-            <div class="role-cards">
-                <div class="role-card" onclick="selectRole('teacher')">
-                    <div class="role-icon teacher-icon">🎓</div>
-                    <h2 class="role-title">I am a Teacher</h2>
-                    <p class="role-description">
-                        Create intelligent quizzes, conduct AI-powered viva sessions, and track student performance with detailed analytics.
-                    </p>
-                    <ul class="role-features">
-                        <li>Generate AI-powered quiz questions</li>
-                        <li>Conduct interactive viva examinations</li>
-                        <li>Real-time performance analytics</li>
-                        <li>Automated grading and feedback</li>
-                        <li>Student progress tracking</li>
-                    </ul>
-                    <a href="{{ url_for('auth.login', role='teacher') }}"><button class="role-button">Get Started as Teacher</button></a>
+        <section id="features" class="features">
+            <div class="container">
+                <div class="section-title" data-aos="fade-up">
+                    <h2>Why Choose IntelliQuiz?</h2>
+                    <p>Discover the features that make our platform the best choice for modern education.</p>
                 </div>
-
-                <div class="role-card" onclick="selectRole('student')">
-                    <div class="role-icon student-icon">👥</div>
-                    <h2 class="role-title">I am a Student</h2>
-                    <p class="role-description">
-                        Join quiz sessions, participate in AI viva examinations, and receive instant feedback to improve your learning.
-                    </p>
-                    <ul class="role-features">
-                        <li>Join quizzes with room codes</li>
-                        <li>Interactive AI viva practice</li>
-                        <li>Instant feedback and explanations</li>
-                        <li>Adaptive learning recommendations</li>
-                    </ul>
-                    <a href="{{ url_for('auth.login', role='student') }}"><button class="role-button">Get Started as Student</button></a>
-                </div>
-
-                <div class="role-card" onclick="selectRole('admin')">
-                    <div class="role-icon admin-icon">⚙️</div>
-                    <h2 class="role-title">I am an Admin</h2>
-                    <p class="role-description">
-                        Manage user accounts, oversee system settings, and access administrative tools for platform maintenance.
-                    </p>
-                    <ul class="role-features">
-                        <li>User account management</li>
-                        <li>System configuration</li>
-                        <li>Content moderation tools</li>
-                        <li>Platform analytics</li>
-                    </ul>
-                    <a href="{{ url_for('auth.login', role='admin') }}"><button class="admin-button">Get Started as Admin</button></a>
-                </div>
-            </div>
-
-            <div class="features-preview">
-                <h2 style="color: white; font-size: 2.5rem; margin-bottom: 2rem; font-weight: 600;">Why Choose IntelliQuiz?</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <h3>🤖 AI-Powered Questions</h3>
-                        <p>Generate diverse, contextual questions automatically using advanced AI algorithms tailored to your curriculum.</p>
+                <div class="feature-grid">
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                        <span class="material-icons-sharp">auto_awesome</span>
+                        <h3>AI Question Generation</h3>
+                        <p>Save time by generating relevant viva and MCQ questions automatically using advanced AI.</p>
                     </div>
-                    <div class="feature-card">
-                        <h3>🎯 Adaptive Learning</h3>
-                        <p>AI adjusts question difficulty based on individual student performance for personalized learning experiences.</p>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                        <span class="material-icons-sharp">shield</span>
+                        <h3>Anti-Cheating</h3>
+                        <p>Ensure exam integrity with features like tab-switching detection and plagiarism checks.</p>
                     </div>
-                    <div class="feature-card">
-                        <h3>💬 Interactive Viva</h3>
-                        <p>Conduct natural conversation-based examinations with AI assistance for comprehensive assessment.</p>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                        <span class="material-icons-sharp">analytics</span>
+                        <h3>Detailed Analytics</h3>
+                        <p>Gain insights into student performance with comprehensive dashboards and reports.</p>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <section id="about" class="container" style="padding: 6rem 2rem;">
+            <div class="section-title" data-aos="fade-up">
+                <h2>About Us</h2>
+                <p>We are dedicated to revolutionizing the examination process by leveraging technology to create a fair, secure, and efficient environment for both educators and students.</p>
+            </div>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}{% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="position: fixed; top: 1.5rem; right: 2.5rem; z-index: 1055;">
+                {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}{% endif %}
+        {% endwith %}
+    </main>
+
+    <footer class="footer">
+        <div class="social-icons">
+            <a href="https://www.linkedin.com" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+            <a href="https://github.com" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
         </div>
-    </section>
+        <p>&copy; 2025 IntelliQuiz. All Rights Reserved.</p>
+    </footer>
 
-    <section id="features" class="page-section">
-        <div class="section-container">
-            <div class="page-content">
-                <div class="feature-list">
-                    <div class="feature-item">
-                        <h3>🎯 Smart Quiz Generation</h3>
-                        <p>Create quizzes instantly with AI-generated questions based on your topics, difficulty levels, and learning objectives. Support for multiple question types including MCQ, short answer, and essay questions.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>🗣️ AI Viva Examinations</h3>
-                        <p>Conduct interactive oral examinations with AI assistance. Natural language processing enables dynamic questioning and real-time evaluation of student responses.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>📱 Multi-Device Support</h3>
-                        <p>Access the platform seamlessly across desktop, tablet, and mobile devices with responsive design and offline capabilities.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>🌐 Real-Time Collaboration</h3>
-                        <p>Live quiz sessions, instant feedback, and collaborative learning environments that connect teachers and students in real-time.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <div class="modal fade" id="loginModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border-radius: 15px;"><div class="modal-header border-0"><h5 class="modal-title fs-4 fw-bold">Login to Your Account</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><form action="{{ url_for('auth.login') }}" method="post"><div class="modal-body px-4"><div class="mb-3"><label for="username" class="form-label">Email / Admin Username</label><input type="text" class="form-control" id="username" name="username" placeholder="Enter your email or admin username" required></div><div class="mb-4"><label for="password" class="form-label">Password</label><input type="password" class="form-control" id="password" name="password" required></div><div class="mb-3"><label class="form-label">Login as:</label><div class="d-flex justify-content-around"><div class="form-check"><input class="form-check-input" type="radio" name="role" id="roleStudent" value="student" checked><label class="form-check-label" for="roleStudent">Student</label></div><div class="form-check"><input class="form-check-input" type="radio" name="role" id="roleTeacher" value="teacher"><label class="form-check-label" for="roleTeacher">Teacher</label></div><div class="form-check"><input class="form-check-input" type="radio" name="role" id="roleAdmin" value="admin"><label class="form-check-label" for="roleAdmin">Admin</label></div></div></div></div><div class="modal-footer border-0 pb-4 px-4"><button type="submit" class="btn btn-primary w-100 fs-5">Login</button></div></form></div></div></div>
 
-    <section id="about" class="page-section">
-        <div class="section-container">
-            <div class="page-content">
-                <h2 style="color: #4285f4; margin-bottom: 2rem; font-size: 2rem;">Our Mission</h2>
-                <p style="font-size: 1.2rem; line-height: 1.8; margin-bottom: 3rem; color: #555;">
-                    IntelliQuiz is revolutionizing the way educators create assessments and students learn. Our platform combines cutting-edge artificial intelligence with intuitive design to make quiz creation, viva examinations, and performance tracking more effective and engaging than ever before.
-                </p>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">10K+</div>
-                        <div class="stat-label">Active Users</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">50K+</div>
-                        <div class="stat-label">Quizzes Created</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">95%</div>
-                        <div class="stat-label">User Satisfaction</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">24/7</div>
-                        <div class="stat-label">AI Support</div>
-                    </div>
-                </div>
-
-                <h3 style="color: #333; margin: 3rem 0 1.5rem; font-size: 1.6rem;">What Makes Us Different</h3>
-                <div class="feature-list">
-                    <div class="feature-item">
-                        <h3>Intelligent Question Generation</h3>
-                        <p>Our AI understands context and creates relevant, challenging questions that test true comprehension rather than just memorization.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>Natural Viva Conversations</h3>
-                        <p>Experience oral examinations that feel natural and comprehensive, with AI that can follow up on answers and probe deeper understanding.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="help" class="page-section">
-        <div class="section-container">
-            <div class="page-content">
-                <h2 style="color: #4285f4; margin-bottom: 2rem;">Getting Started</h2>
-                
-                <div class="feature-list">
-                    <div class="feature-item">
-                        <h3>For Teachers</h3>
-                        <p>1. Sign up with your educator credentials<br>
-                        2. Create your first quiz using AI assistance<br>
-                        3. Share room codes with students<br>
-                        4. Monitor progress in real-time<br>
-                        5. Review detailed analytics and reports</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>For Students</h3>
-                        <p>1. Create your student account<br>
-                        2. Enter the room code provided by your teacher<br>
-                        3. Take quizzes and participate in viva sessions<br>
-                        4. Review your feedback and progress<br>
-                        5. Practice with AI-generated questions</p>
-                    </div>
-                </div>
-
-                <h3 style="color: #333; margin: 3rem 0 1.5rem; font-size: 1.6rem;">Frequently Asked Questions</h3>
-                <div style="text-align: left;">
-                    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9ff; border-radius: 10px;">
-                        <h4 style="color: #4285f4; margin-bottom: 1rem;">How does AI question generation work?</h4>
-                        <p style="color: #666; line-height: 1.6;">Our AI analyzes your curriculum content and generates contextually relevant questions at various difficulty levels, ensuring comprehensive coverage of learning objectives.</p>
-                    </div>
-                    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9ff; border-radius: 10px;">
-                        <h4 style="color: #4285f4; margin-bottom: 1rem;">Is my data secure?</h4>
-                        <p style="color: #666; line-height: 1.6;">Yes, we use enterprise-grade encryption and follow strict privacy protocols. Your quiz content and student data are protected with the highest security standards.</p>
-                    </div>
-                    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9ff; border-radius: 10px;">
-                        <h4 style="color: #4285f4; margin-bottom: 1rem;">Can I use this offline?</h4>
-                        <p style="color: #666; line-height: 1.6;">The platform supports offline mode for taking previously downloaded quizzes, with automatic sync when connection is restored.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="contact" class="page-section">
-        <div class="section-container">
-            <div class="page-content">
-                <h2 style="color: #4285f4; margin-bottom: 2rem; text-align: center;">Get in Touch</h2>
-                <p style="text-align: center; margin-bottom: 3rem; color: #666; font-size: 1.1rem;">
-                    Have questions about IntelliQuiz? We're here to help! Reach out to our support team.
-                </p>
-
-                <form class="contact-form" onsubmit="submitForm(event)">
-                    <div class="form-group">
-                        <label for="name">Full Name</label>
-                        <input type="text" id="name" name="name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="role">Your Role</label>
-                        <select id="role" name="role" style="width: 100%; padding: 1rem; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 1rem;">
-                            <option value="teacher">Teacher/Educator</option>
-                            <option value="student">Student</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="subject">Subject</label>
-                        <input type="text" id="subject" name="subject" placeholder="How can we help you?" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="message">Message</label>
-                        <textarea id="message" name="message" rows="5" placeholder="Tell us more about your inquiry..." required></textarea>
-                    </div>
-                    <div style="text-align: center;">
-                        <button type="submit" class="submit-btn">Send Message</button>
-                    </div>
-                </form>
-
-                <div style="margin-top: 4rem; text-align: center;">
-                    <h3 style="color: #333; margin-bottom: 2rem;">Other Ways to Reach Us</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-                        <div style="padding: 1.5rem; background: #f8f9ff; border-radius: 10px;">
-                            <h4 style="color: #4285f4; margin-bottom: 1rem;">📧 Email Support</h4>
-                            <p style="color: #666;">support@quizmaster.ai</p>
-                        </div>
-                        <div style="padding: 1.5rem; background: #f8f9ff; border-radius: 10px;">
-                            <h4 style="color: #4285f4; margin-bottom: 1rem;">💬 Live Chat</h4>
-                            <p style="color: #666;">Available 24/7 for instant help</p>
-                        </div>
-                        <div style="padding: 1.5rem; background: #f8f9ff; border-radius: 10px;">
-                            <h4 style="color: #4285f4; margin-bottom: 1rem;">📚 Documentation</h4>
-                            <p style="color: #666;">Comprehensive guides and tutorials</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        // Page Navigation
-        function showPage(pageId) {
-            // Hide all pages
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Show selected page
-            document.getElementById(pageId).classList.add('active');
-            
-            // Update nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function selectRole(role) {
-            // Add smooth transition effect
-            const card = event.currentTarget;
-            card.style.transform = 'scale(0.95)';
-            
-            setTimeout(() => {
-                card.style.transform = '';
-                
-                // Simulate navigation based on role
-                switch(role) {
-                    case 'teacher':
-                        alert('Redirecting to Teacher Dashboard...\n\nFeatures:\n• Create and manage quizzes\n• Conduct AI viva sessions\n• View student analytics\n• Generate AI questions\n• Track student progress');
-                        break;
-                    case 'student':
-                        alert('Redirecting to Student Portal...\n\nFeatures:\n• Join quiz sessions\n• Take practice tests\n• View your progress\n• AI viva practice\n• Instant feedback');
-                        break;
-                    case 'admin':
-                        alert('Redirecting to Admin Dashboard...\n\nFeatures:\n• Manage users\n• System configuration\n• Content moderation\n• Platform analytics');
-                        break;
-                }
-            }, 150);
-        }
-
-        // Contact form submission
-        function submitForm(event) {
-            event.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(event.target);
-            const data = {
-                name: formData.get('name'),
-                email: formData.get('email'),
-                role: formData.get('role'),
-                subject: formData.get('subject'),
-                message: formData.get('message')
-            };
-            
-            // Simulate form submission
-            alert(`Thank you ${data.name}!\n\nYour message has been sent successfully. We'll get back to you within 24 hours at ${data.email}.`);
-            
-            // Reset form
-            event.target.reset();
-        }
-
-        // Add parallax effect to background circles
-        window.addEventListener('mousemove', (e) => {
-            const circles = document.querySelectorAll('.bg-circle');
-            const mouseX = e.clientX / window.innerWidth;
-            const mouseY = e.clientY / window.innerHeight;
-            
-            circles.forEach((circle, index) => {
-                const speed = (index + 1) * 0.02;
-                const x = (mouseX - 0.5) * speed * 100;
-                const y = (mouseY - 0.5) * speed * 100;
-                circle.style.transform = `translate(${x}px, ${y}px)`;
-            });
-        });
-
-        // Add entrance animations
-        window.addEventListener('load', () => {
-            const cards = document.querySelectorAll('.role-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(30px)';
-                card.style.transition = 'all 0.6s ease';
-                
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, (index + 1) * 200);
-            });
-        });
-
-        // Add navigation link click handlers
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Remove active class from all links
-                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                    
-                    // Add active class to clicked link
-                    this.classList.add('active');
-                });
+            // Initialize the AOS animation library
+            AOS.init({
+                duration: 800,
+                once: true,
+                offset: 50,
             });
+
+            // --- Animated Background Circles ---
+            const shapesContainer = document.querySelector('.background-shapes');
+            if (shapesContainer) {
+                for (let i = 0; i < 15; i++) {
+                    const circle = document.createElement('div');
+                    circle.classList.add('circle');
+                    const size = Math.random() * 100 + 50;
+                    circle.style.width = `${size}px`; circle.style.height = `${size}px`;
+                    circle.style.top = `${Math.random() * 100}%`; circle.style.left = `${Math.random() * 100}%`;
+                    circle.dataset.speed = Math.random() * 0.2 + 0.1;
+                    shapesContainer.appendChild(circle);
+                }
+                document.addEventListener('mousemove', (e) => {
+                    const mouseX = e.clientX / window.innerWidth - 0.5;
+                    const mouseY = e.clientY / window.innerHeight - 0.5;
+                    document.querySelectorAll('.circle').forEach(circle => {
+                        const speed = parseFloat(circle.dataset.speed) * 100;
+                        const x = -mouseX * speed; const y = -mouseY * speed;
+                        circle.style.transform = `translate(${x}px, ${y}px)`;
+                    });
+                });
+            }
+
+            // --- Active Nav Link on Scroll ---
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            window.onscroll = () => {
+                let current = 'home';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (window.pageYOffset >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(a => {
+                    a.classList.remove('active');
+                    if (a.getAttribute('href') === '#' + current) {
+                        a.classList.add('active');
+                    }
+                });
+            };
         });
     </script>
 </body>
