@@ -1056,56 +1056,62 @@ def send_mail_route():
     return redirect(url_for('admin.dashboard'))
 
 # --- NEW FEATURE: Import students from CSV ---
-@bp_admin.route('/api/import_users', methods=['POST'])
+@bp_admin.route('/import_users', methods=['POST'])
 @admin_required
 def import_users():
-    uploaded_file = request.files['file']
-    if not uploaded_file or uploaded_file.filename == '' or not uploaded_file.filename.endswith('.csv'):
-        return jsonify({'error': 'Invalid file. Please upload a CSV file.'}), 400
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part found in the request.'}), 400
+    
+    file = request.files['file']
+    if file.filename == '' or not file.filename.endswith('.csv'):
+        return jsonify({'error': 'Invalid file. Please upload a valid CSV file.'}), 400
 
-    new_users_passwords = []
-    
-    # Process the CSV file
-    csv_file = uploaded_file.stream.read().decode('utf-8')
-    csv_reader = csv.reader(csv_file.splitlines())
-    
-    # Skip header row
-    next(csv_reader)
-    
-    db = get_db()
-    db.execute('BEGIN IMMEDIATE')
     try:
+        # Read the CSV file in memory using DictReader for reliability
+        csv_file = file.stream.read().decode('utf-8')
+        csv_reader = csv.DictReader(csv_file.splitlines())
+        
+        db = get_db()
+        users_added = 0
+        
         for row in csv_reader:
-            if len(row) < 3:
-                continue # Skip invalid rows
+            # Assumes your CSV has 'Username', 'Email', and 'Role' columns
+            username = row.get('Username')
+            email = row.get('Email')
+            role = row.get('Role', 'student').lower() # Defaults to 'student' if Role is missing
+
+            if not all([username, email, role]):
+                continue # Skip rows that are missing essential data
+
+            # Use the agreed-upon password length of 8
+            password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
             
-            username = row[0].strip()
-            email = row[1].strip()
-            role = row[2].strip().lower()
+            try:
+                db.execute(
+                    'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+                    (username, email, password, role)
+                )
+                db.commit()
+                # Send email to new students and teachers
+                
+                # ----------------sending mail---------------------------
+                # if role in ['student', 'teacher']:
+                #     send_student_email(email, username, password)
+                
+                users_added += 1
+            except sqlite3.IntegrityError:
+                # This handles cases where the username or email already exists in the database
+                db.rollback()
+                print(f"Skipping duplicate user: {username} ({email})")
+                
+        if users_added > 0:
+            return jsonify({'message': f'Successfully imported {users_added} users.'})
+        else:
+            return jsonify({'error': 'No new users were imported. Check the CSV for duplicates or formatting issues.'})
 
-            # Automatically generate password
-            password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-
-            db.execute(
-                "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)",
-                (username, email, password, role)
-            )
-            # Send email for student accounts
-            if role == 'student':
-                email_sent = send_student_email(email, username, password)
-                if not email_sent:
-                    flash(f"Warning: Failed to send email to {email}.", 'warning')
-            
-            new_users_passwords.append({'username': username, 'password': password})
-
-        db.commit()
-        return jsonify({'message': f'Successfully imported {len(new_users_passwords)} users.'})
-    except sqlite3.IntegrityError:
-        db.rollback()
-        return jsonify({'error': 'A user with that username or email already exists. Import aborted.'}), 400
     except Exception as e:
         db.rollback()
-        return jsonify({'error': f'An error occurred during import: {e}'}), 500
+        return jsonify({'error': f'An error occurred during processing: {str(e)}'}), 500
 
 # --- API Routes ---
 def generate_unique_room_code(db):

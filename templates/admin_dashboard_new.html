@@ -186,7 +186,29 @@
                 });
             });
 
-            function handleCsvImport() { /* ... CSV logic from before ... */ }
+            function handleCsvImport(event) {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.csv';
+                input.onchange = e => {
+                    if (e.target.files.length === 0) return;
+                    const formData = new FormData();
+                    formData.append('file', e.target.files[0]);
+                    
+                    // This fetch call now correctly matches the Python route
+                    fetch('{{ url_for("admin.import_users") }}', { 
+                        method: 'POST', 
+                        body: formData 
+                    })
+                    .then(res => res.json()).then(data => {
+                        alert(data.error || data.message);
+                        if (!data.error) {
+                            window.location.reload();
+                        }
+                    }).catch(() => alert('An unexpected error occurred.'));
+                };
+                input.click();
+            }
             document.getElementById('import-csv-btn-student')?.addEventListener('click', handleCsvImport);
             document.getElementById('import-csv-btn-teacher')?.addEventListener('click', handleCsvImport);
             
