@@ -458,7 +458,7 @@ def dashboard():
     # Quiz management actions (edit, delete, duplicate)
     # Pass quizzes_raw as quizzes, each quiz will have id, title, etc.
     return render_template(
-        'teacher_dashboard.html',
+        'teacher_dashboard_new.html',
         quizzes=quizzes_raw,
         username=session.get('username'),
         quiz_count=quiz_count,
@@ -468,6 +468,102 @@ def dashboard():
         student_performance=student_performance,
         suspicious_logs=suspicious_logs
     )
+
+# Sending Mails
+def send_quiz_invitation_email(to_email, quiz_title, room_code):
+    """Helper function to format and send the quiz invitation email."""
+    subject = f"Invitation to take quiz: {quiz_title}"
+    html_content = f"""
+    <html>
+        <body>
+            <p>Hello Student,</p>
+            <p>You have been invited to take the quiz titled "<h3 style="color:black;">{quiz_title}</h3>".</p>
+            <p>Please use the following room code to access the quiz:</p>
+            <h2 style="color:#7367F0;">{room_code}</h2>
+            <p>Good luck!</p>
+        </body>
+    </html>
+    """
+    # This assumes you have a generic send_email function like the one we built for the admin panel
+    return send_email(to_email, subject, html_content)
+
+
+@bp_teacher.route('/send_quiz_invite', methods=['POST'])
+@login_required
+def send_quiz_invite():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('main.index'))
+
+    quiz_id = request.form.get('quiz_id')
+    if not quiz_id:
+        flash('Please select a quiz to send invites for.', 'danger')
+        return redirect(url_for('teacher.dashboard'))
+
+    db = get_db()
+    
+    # Get the selected quiz's details
+    quiz = db.execute('SELECT title, room_code FROM quizzes WHERE id = ?', (quiz_id,)).fetchone()
+    if not quiz or not quiz['room_code']:
+        flash('Selected quiz does not exist or has no room code.', 'danger')
+        return redirect(url_for('teacher.dashboard'))
+        
+    # Get all student emails
+    students = db.execute("SELECT email FROM users WHERE role = 'student'").fetchall()
+    student_emails = [student['email'] for student in students]
+    
+    if not student_emails:
+        flash('There are no students to send invitations to.', 'warning')
+        return redirect(url_for('teacher.dashboard'))
+        
+    # Send the email to every student
+    success_count = 0
+    for email in student_emails:
+        if send_quiz_invitation_email(email, quiz['title'], quiz['room_code']):
+            success_count += 1
+            
+    flash(f'Successfully sent quiz invitation to {success_count} student(s).', 'success')
+    return redirect(url_for('teacher.dashboard'))
+
+# Clear logs funcctionality
+@bp_teacher.route('/clear_logs', methods=['POST'])
+@login_required
+def clear_suspicious_logs():
+    # Ensure the user is a teacher
+    if session.get('role') != 'teacher':
+        flash('You do not have permission to perform this action.', 'danger')
+        return redirect(url_for('main.index'))
+
+    teacher_id = session.get('user_id')
+    db = get_db()
+
+    # Security check: Get all quiz IDs that belong to the current teacher
+    teacher_quizzes = db.execute('SELECT id FROM quizzes WHERE teacher_id = ?', (teacher_id,)).fetchall()
+    
+    if not teacher_quizzes:
+        flash('You have no quizzes to clear logs for.', 'info')
+        return redirect(url_for('teacher.dashboard'))
+
+    # Create a tuple of quiz IDs to safely use in the SQL query
+    quiz_ids_tuple = tuple([q['id'] for q in teacher_quizzes])
+
+    try:
+        # Delete only the logs associated with this teacher's quizzes
+        cursor = db.execute(
+            f'DELETE FROM activity_log WHERE quiz_id IN ({",".join("?" * len(quiz_ids_tuple))})',
+            quiz_ids_tuple
+        )
+        db.commit()
+        
+        if cursor.rowcount > 0:
+            flash(f'Successfully cleared {cursor.rowcount} suspicious activity logs.', 'success')
+        else:
+            flash('No suspicious activity logs were found to clear.', 'info')
+
+    except sqlite3.Error as e:
+        db.rollback()
+        flash(f'An error occurred: {e}', 'danger')
+        
+    return redirect(url_for('teacher.dashboard'))
 
 
 # --- Teacher: Create Quiz (GET) ---
@@ -742,9 +838,11 @@ def quiz_details(quiz_id):
     db = get_db()
     quiz = db.execute(
         'SELECT q.*, COUNT(qu.id) as question_count FROM quizzes q LEFT JOIN questions qu ON q.id = qu.quiz_id WHERE q.id = ? AND q.teacher_id = ? GROUP BY q.id ORDER BY q.created_at DESC',
-        (session['user_id'],)
-    ).fetchall()
-    if not quiz: return redirect(url_for('teacher.dashboard'))
+        (quiz_id, session['user_id'],)
+    ).fetchone()
+    
+    if not quiz:
+        return redirect(url_for('teacher.dashboard'))
     
     results = db.execute(
         'SELECT r.score, u.username FROM results r JOIN users u ON r.student_id = u.id WHERE r.quiz_id = ?', (quiz_id,)
