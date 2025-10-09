@@ -1,268 +1,228 @@
-<!-- templates/student_dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+    <style>
+        /* Consistent styling from other dashboards */
+        :root {
+            --color-primary: #7367F0;
+            --color-success: #28C76F;
+            --color-warning: #FF9F43;
+            --color-white: #ffffff;
+            --color-light-grey: #F8F7FA;
+            --color-dark: #2C2A3A;
+            --sidebar-width: 280px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--color-light-grey); color: #5E5873; display: flex; }
+
+        /* Sidebar */
+        .sidebar { width: var(--sidebar-width); background: var(--color-dark); color: #F8F7FA; display: flex; flex-direction: column; padding: 1.5rem; position: fixed; height: 100%; z-index: 1000; transition: transform 0.3s ease-in-out; }
+        .sidebar-brand { font-size: 1.8rem; font-weight: 700; margin-bottom: 2.5rem; color: var(--color-white); padding-left: 0.5rem; text-decoration: none; }
+        .sidebar-brand span { color: var(--color-primary); }
+        .sidebar-menu a { display: flex; align-items: center; color: #b0afb4; padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 0.8rem; text-decoration: none; }
+        .sidebar-menu a .material-icons-sharp { margin-right: 1.2rem; font-size: 1.6rem; }
+        .sidebar-menu a h4 { font-weight: 500; font-size: 1rem; margin: 0; }
+        .sidebar-menu a.active, .sidebar-menu a:hover { background: var(--color-primary); color: var(--color-white); box-shadow: 0 5px 15px rgba(115, 103, 240, 0.4); }
+        .sidebar-footer { margin-top: auto; }
+        
+        /* Main Content */
+        .main-content { margin-left: var(--sidebar-width); padding: 2.5rem; width: calc(100% - var(--sidebar-width)); transition: margin-left 0.3s ease-in-out; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 2.5rem; font-weight: 700; color: var(--color-dark); }
+        
+        /* Cards & Tables */
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem; margin-bottom: 2.5rem; }
+        .card { background: var(--color-white); padding: 2rem; border-radius: 15px; border: none; box-shadow: 0 4px 25px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 2rem; }
+        .card-icon { font-size: 3rem; padding: 1.2rem; border-radius: 50%; display: flex; }
+        .card-icon.quizzes { background-color: #E8E7FD; color: var(--color-primary); }
+        .card-icon.completed { background-color: #d4edda; color: var(--color-success); }
+        .card-icon.score { background-color: #fff0e1; color: var(--color-warning); }
+        .card-info h3 { font-size: 2.8rem; font-weight: 700; color: var(--color-dark); }
+        .card-info p { color: #6E6B7B; margin: 0; font-size: 1rem; }
+        .data-section { background: var(--color-white); border-radius: 15px; padding: 2rem; box-shadow: 0 4px 25px rgba(0,0,0,0.05); }
+        .data-header { display: flex; align-items: center; margin-bottom: 1.5rem; gap: 1rem; }
+        .data-header h2 { font-size: 1.6rem; font-weight: 600; color: var(--color-dark); margin: 0; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1.2rem 1rem; text-align: left; border-bottom: 1px solid #f0f0f0; vertical-align: middle; white-space: nowrap; }
+        thead th { font-weight: 600; font-size: 0.9rem; color: #6E6B7B; text-transform: uppercase; }
+        .btn-take-quiz { background-color: var(--color-primary); color: var(--color-white); text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease-in-out; }
+        .btn-take-quiz:hover { background-color: #6158d6; }
+        .view { display: none; }
+        .view.active { display: block; }
+        
+        /* Mobile */
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--color-dark); font-size: 2rem; cursor: pointer; }
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; width: 100%; padding: 1.5rem; }
+            .mobile-menu-btn { display: block; }
+        }
+    </style>
 </head>
-<body class="student-dashboard">
-    <!-- Navigation Bar -->
-    <nav class="main-nav">
-        <div class="nav-brand">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                <line x1="9" y1="9" x2="9.01" y2="9"/>
-                <line x1="15" y1="9" x2="15.01" y2="9"/>
-            </svg>
-            <span>AI Quiz Student</span>
+<body>
+    <aside class="sidebar">
+        <a href="{{ url_for('student.dashboard') }}" class="sidebar-brand">Intelli<span>Quiz</span></a>
+        <div class="sidebar-menu">
+            <a href="#" class="nav-link active" data-view="dashboard-view"><span class="material-icons-sharp">dashboard</span><h4>Dashboard</h4></a>
+            <a href="#" class="nav-link" data-view="history-view"><span class="material-icons-sharp">history</span><h4>Quiz History</h4></a>
         </div>
-        <div class="nav-menu">
-            <a href="#profile" class="nav-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-                Profile
-            </a>
-            <a href="{{ url_for('auth.logout') }}" class="nav-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Logout
-            </a>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-menu"><span class="material-icons-sharp">logout</span><h4>Logout</h4></a>
         </div>
-    </nav>
-    <div class="container">
-        <div class="dashboard-content" style="padding: 2rem; background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <header class="dashboard-header" id="profile">
-                <div>
-                    <h1 style="color: var(--slate-900); margin-bottom: 0.5rem;">Welcome back, {{ username }}!</h1>
-                    <p style="color: var(--slate-600); font-size: 1.125rem;">Ready to challenge yourself?</p>
-                </div>
-            </header>
+    </aside>
 
-            <!-- Quick Join Section -->
-            <section class="join-section" style="margin: 2rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                <div class="join-card card" style="background: linear-gradient(to right, var(--primary-600), var(--accent-600)); color: white;">
-                    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                            <polyline points="10 17 15 12 10 7"/>
-                            <line x1="15" y1="12" x2="3" y2="12"/>
-                        </svg>
-                        Join a Quiz
-                    </h2>
-                    <div id="join-error" class="error-message" style="display: none; color: #b91c1c; background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;"></div>
-                    <form id="join-quiz-form" autocomplete="off">
-                                <!-- Show last join error if present -->
-                                {% with messages = get_flashed_messages() %}
-                                    {% if messages %}
-                                        <div class="error-message" style="color: #b91c1c; background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-                                            {{ messages[0] }}
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
-                        <div class="form-group" style="margin-bottom: 1.5rem;">
-                            <label for="room_code" style="color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem; display: block;">Enter Room Code</label>
-                            <input type="text" id="room_code" name="room_code" 
-                                placeholder="ENTER CODE" required maxlength="6" 
-                                style="text-align: center; letter-spacing: 0.25em; font-family: monospace; font-size: 1.5rem; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); color: white;"
-                                class="room-code-input">
-                        </div>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <button type="submit" class="btn" style="background: white; color: var(--primary-700); font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-                            Start Quiz
-                        </button>
-                            <button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText(window.location.origin + '/student/dashboard?room_code=' + (document.getElementById('room_code').value||''))">Copy Join Link</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Stats Overview -->
-                <div class="stats-overview" style="display: grid; gap: 1rem;">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/></svg>
-                            <h3>Total Quizzes</h3>
-                        </div>
-                        <div class="stat-value">{{ quizzes_taken if quizzes_taken is defined else '0' }}</div>
-                        <div class="stat-label">Quizzes completed</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-                            <h3>Performance</h3>
-                        </div>
-                        <div class="stat-value">{{ avg_score if avg_score is defined else 'N/A' }}</div>
-                        <div class="stat-label">Average score</div>
-                    </div>
-
-                    {% if past_quizzes and past_quizzes|length > 0 %}
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <h3>Last Result</h3>
-                        </div>
-                        {% set last = past_quizzes[0] %}
-                        <div class="stat-value">{{ last.score }}%</div>
-                        <div class="stat-label">{{ last.title }}</div>
-                    </div>
-                    {% endif %}
-                </div>
-            </section>
-
-            <!-- Recent Activity Timeline -->
-            <section class="activity-timeline">
-                <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--slate-900); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    Recent Activity
-                </h2>
-                {% if recent_activity %}
-                    <div class="timeline" style="display: grid; gap: 1rem;">
-                        {% for activity in recent_activity %}
-                        <div class="activity-item">
-                            <div class="activity-content">
-                                <div class="activity-title">{{ activity }}</div>
-                                <div class="activity-time">Just now</div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="empty-state" style="text-align: center; padding: 2rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 1rem; color: var(--slate-400);">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="12"/>
-                            <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                        <p style="color: var(--slate-600);">No recent activity</p>
-                        <p style="color: var(--slate-500); margin-top: 0.5rem;">Join a quiz to get started!</p>
-                    </div>
-                {% endif %}
-            </section>
-        <!-- Quiz History Section -->
-        <section class="quiz-history" style="margin-top: 2rem;">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--slate-900); display: flex; align-items: center; gap: 0.5rem;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-                    </svg>
-                    Quiz History
-                </h2>
-                <div class="view-options" style="display: flex; gap: 0.5rem;">
-                    <button class="btn btn-sm btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
-                            <path d="M21 12H3M12 3v18"/>
-                        </svg>
-                        Grid View
-                    </button>
-                    <button class="btn btn-sm btn-secondary active">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="8" y1="6" x2="21" y2="6"/>
-                            <line x1="8" y1="12" x2="21" y2="12"/>
-                            <line x1="8" y1="18" x2="21" y2="18"/>
-                            <line x1="3" y1="6" x2="3.01" y2="6"/>
-                            <line x1="3" y1="12" x2="3.01" y2="12"/>
-                            <line x1="3" y1="18" x2="3.01" y2="18"/>
-                        </svg>
-                        List View
-                    </button>
-                </div>
+    <main class="main-content">
+        <div class="header">
+             <h1 id="page-title">Dashboard</h1>
+             <button class="mobile-menu-btn"><span class="material-icons-sharp">menu</span></button>
+        </div>
+        
+        <div id="dashboard-view" class="view active">
+            <p class="fs-5 mb-4">Welcome back, {{ username }}! Ready to test your knowledge? 👋</p>
+            <div class="stat-cards">
+                <div class="card"><div class="card-icon quizzes"><span class="material-icons-sharp">quiz</span></div><div class="card-info"><h3>{{ available_quiz_count }}</h3><p>Available Quizzes</p></div></div>
+                <div class="card"><div class="card-icon completed"><span class="material-icons-sharp">check_circle</span></div><div class="card-info"><h3>{{ completed_quiz_count }}</h3><p>Quizzes Completed</p></div></div>
+                <div class="card"><div class="card-icon score"><span class="material-icons-sharp">leaderboard</span></div><div class="card-info"><h3>{{ '%.1f'|format(avg_score) }}%</h3><p>Average Score</p></div></div>
             </div>
-
-            {% if past_quizzes and past_quizzes|length > 0 %}
-            <div class="quiz-history-list">
-                <div class="dashboard-table">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th>Quiz</th>
-                                <th>Date & Time</th>
-                                <th>Score</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+            <div class="data-section">
+                <div class="data-header">
+                    <span class="material-icons-sharp fs-2 text-primary">pending_actions</span>
+                    <h2>Available Quizzes to Take</h2>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>No</th><th>Quiz Title</th><th>Action</th></tr></thead>
                         <tbody>
-                        {% for quiz in past_quizzes %}
+                            {% for quiz in available_quizzes %}
                             <tr>
+                                <!-- <td>{{ quiz.username or 'Unknown' }}</td> -->
+                                <td>{{ loop.index }}</td>
+                                <td>{{ quiz.title }}</td>
+                                <!-- <td>{{ quiz.description or 'No description provided.' }}</td> -->
                                 <td>
-                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <div class="quiz-icon" style="width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; background: var(--primary-100); color: var(--primary-700); border-radius: 0.5rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <div style="font-weight: 500; color: var(--slate-900);">{{ quiz.title }}</div>
-                                            <div style="font-size: 0.875rem; color: var(--slate-500);">Quiz ID: {{ quiz.quiz_id }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style="display: flex; flex-direction: column;">
-                                        {% if quiz.submitted_at %}
-                                            {% if quiz.submitted_at.strftime is not undefined %}
-                                                <span style="color: var(--slate-900);">{{ quiz.submitted_at.strftime('%Y-%m-%d') }}</span>
-                                                <span style="font-size: 0.875rem; color: var(--slate-500);">{{ quiz.submitted_at.strftime('%H:%M:%S') }}</span>
-                                            {% else %}
-                                                {% set parts = quiz.submitted_at.split(' ') %}
-                                                <span style="color: var(--slate-900);">{{ parts[0] if parts|length > 0 else 'N/A' }}</span>
-                                                <span style="font-size: 0.875rem; color: var(--slate-500);">{{ parts[1] if parts|length > 1 else '' }}</span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span style="color: var(--slate-900);">N/A</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="score-badge {% if quiz.score >= 70 %}score-high{% elif quiz.score >= 40 %}score-medium{% else %}score-low{% endif %}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M12 20V10M18 20V4M6 20v-4"/>
-                                        </svg>
-                                        {{ quiz.score }}%
-                                    </div>
-                                </td>
-                                <td>
-                                    <a href="{{ url_for('student.quiz_result', result_id=quiz.quiz_id) }}" class="btn btn-sm btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                            <circle cx="12" cy="12" r="3"/>
-                                        </svg>
-                                        View Details
-                                    </a>
+                                    <button type="button" class="btn-take-quiz" data-bs-toggle="modal" data-bs-target="#enterCodeModal" data-quiz-id="{{ quiz.id }}" data-quiz-title="{{ quiz.title }}">
+                                        Take Quiz
+                                    </button>
                                 </td>
                             </tr>
-                        {% endfor %}
+                            {% else %}
+                            <tr><td colspan="3" class="text-center p-5">No new quizzes available. Great job!</td></tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
-            {% else %}
-            <div class="empty-state" style="text-align: center; padding: 3rem; background: white; border-radius: 1rem; border: 2px dashed var(--slate-200);">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 1rem; color: var(--slate-400);">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                </svg>
-                <p style="color: var(--slate-600); font-size: 1.1rem;">No quiz history yet</p>
-                <p style="color: var(--slate-500); margin-top: 0.5rem;">Join your first quiz to start your learning journey!</p>
+        </div>
+
+        <div id="history-view" class="view">
+            <div class="data-section">
+                <div class="data-header">
+                    <span class="material-icons-sharp fs-2 text-success">fact_check</span>
+                    <h2>Completed Quizzes</h2>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>ID</th><th>Quiz Title</th><th>Score</th><th>Date Completed</th><th>Action</th></tr></thead>
+                        <tbody>
+                            {% for result in completed_quizzes %}
+                            <tr>
+                                <td>{{ result.id }}</td>
+                                <td>{{ result.title }}</td>
+                                <td><strong>{{ result.score }}%</strong></td>
+                                <td>{{ result.submitted_at.strftime('%Y-%m-%d %H:%M') if result.submitted_at else 'N/A' }}</td>
+                                <td><a href="{{ url_for('student.quiz_result', result_id=result.id) }}" class="btn-take-quiz">View Result</a></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center p-5">You have not completed any quizzes yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            {% endif %}
-        </section>
+        </div>
+    </main>
+
+    <div class="modal fade" id="enterCodeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="enterCodeModalTitle">Join Quiz</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('student.api_join_quiz') }}" method="POST">
+                    <div class="modal-body">
+                        <p>Please enter the room code for the selected quiz.</p>
+                        <input type="hidden" name="quiz_id" id="modal_quiz_id">
+                        <div class="mb-3">
+                            <label for="room_code" class="form-label">Room Code</label>
+                            <input type="text" class="form-control" id="room_code" name="room_code" required autocomplete="off" style="text-transform:uppercase">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Join Quiz</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            const pageTitle = document.getElementById('page-title');
+            
+            menuBtn?.addEventListener('click', () => sidebar.classList.toggle('open'));
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const views = document.querySelectorAll('.view');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navLinks.forEach(item => item.classList.remove('active'));
+                    link.classList.add('active');
+                    const viewId = link.getAttribute('data-view');
+                    views.forEach(view => view.classList.remove('active'));
+                    document.getElementById(viewId).classList.add('active');
+                    pageTitle.textContent = link.querySelector('h4').textContent;
+                    sidebar.classList.remove('open');
+                });
+            });
+
+            // NEW: Script to pass the quiz ID and title to the modal
+            var enterCodeModal = document.getElementById('enterCodeModal');
+            enterCodeModal.addEventListener('show.bs.modal', function (event) {
+                // Button that triggered the modal
+                var button = event.relatedTarget;
+                // Extract info from data-* attributes
+                var quizId = button.getAttribute('data-quiz-id');
+                var quizTitle = button.getAttribute('data-quiz-title');
+
+                // Update the modal's content.
+                var modalTitle = enterCodeModal.querySelector('.modal-title');
+                var modalQuizIdInput = enterCodeModal.querySelector('#modal_quiz_id');
+
+                modalTitle.textContent = 'Join Quiz: ' + quizTitle;
+                modalQuizIdInput.value = quizId;
+            });
+        });
+    </script>
 </body>
 </html>
-
-
