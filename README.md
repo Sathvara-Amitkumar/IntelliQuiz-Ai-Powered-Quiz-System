@@ -40,24 +40,18 @@ IntelliQuiz is a comprehensive web-based quiz management system built with Flask
 - **Authentication**: Session-based with role management
 - **File Handling**: CSV import for user management
 
-## Installation
-
-### Prerequisites
-- Python 3.8 or higher
-- pip (Python package manager)
-
 ### Setup Steps
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
-   cd IntelliQuiz
+   git clone https://github.com/Sathvara-Amitkumar/IntelliQuiz-Ai-Powered-Quiz-System.git
+   cd IntelliQuiz-Ai-Powered-Quiz-System
    ```
 
 2. **Create a virtual environment** (recommended):
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   venv\Scripts\activate  
    ```
 
 3. **Install dependencies**:
@@ -76,7 +70,6 @@ IntelliQuiz is a comprehensive web-based quiz management system built with Flask
    MAIL_PORT=587
    MAIL_USERNAME=your-email@gmail.com
    MAIL_PASSWORD=your-app-password
-   SESSION_COOKIE_SECURE=False  # Set to True in production with HTTPS
    ```
 
 5. **Initialize the database**:
@@ -124,16 +117,6 @@ The application uses SQLite with automatic schema initialization. The database f
 3. Complete the quiz within the time limit
 4. View results after submission
 
-## API Endpoints
-
-The application includes several API endpoints for AJAX functionality:
-
-- `POST /teacher/api/quiz/finalize`: Finalize quiz creation
-- `POST /teacher/api/quiz/delete/<quiz_id>`: Delete a quiz
-- `POST /student/api/quiz/join`: Join a quiz with room code
-- `POST /student/api/quiz/submit`: Submit quiz answers
-- `POST /student/api/log_suspicious`: Log suspicious activities
-
 ## File Structure
 
 ```
@@ -153,37 +136,10 @@ IntelliQuiz/
     └── session_store.py   # Session management
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support, please contact the development team or create an issue in the repository.
-
-## Changelog
-
-### Version 1.0.0
-- Initial release with core quiz functionality
-- AI-powered question generation
-- Anti-cheating features
-- Multi-role user system
-- Email notifications
-- CSV user import
-
 ## Future Enhancements
 
 - Mobile app development
 - Advanced analytics and reporting
 - Integration with learning management systems
-- Real-time quiz monitoring
 - Enhanced AI question customization
 - Multi-language support
