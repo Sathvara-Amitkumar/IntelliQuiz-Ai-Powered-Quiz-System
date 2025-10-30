@@ -126,20 +126,32 @@
             </div>
         </section>
 
-        <section id="about" class="container" style="padding: 6rem 2rem;">
-            <div class="section-title" data-aos="fade-up">
-                <h2>About Us</h2>
-                <p>We are dedicated to revolutionizing the examination process by leveraging technology to create a fair, secure, and efficient environment for both educators and students.</p>
+        <section id="about" class="about-section">
+            <div class="container">
+                <div class="section-title">
+                    <h2>About IntelliQuiz</h2>
+                </div>
+                <div class="row align-items-center">
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        <img src="https://images.unsplash.com/photo-1542744095-291d1f67b221?q=80&w=2070" class="img-fluid rounded-3 shadow" alt="Team working in a modern office">
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="about-card mb-4">
+                            <h3><span class="material-icons-sharp">rocket_launch</span> Our Mission</h3>
+                            <p>Our mission is to revolutionize the examination process by leveraging cutting-edge AI. We aim to create a fair, secure, and efficient environment that empowers educators and provides a seamless testing experience for students.</p>
+                        </div>
+                        <div class="about-card">
+                            <h3><span class="material-icons-sharp">memory</span> Our Technology</h3>
+                            <p>IntelliQuiz is built on a foundation of powerful technologies. We use advanced generative AI, like Google's Gemini, to create high-quality quiz content in seconds. Our platform includes robust anti-cheating features and provides detailed analytics to track student performance effectively.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}{% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="position: fixed; top: 1.5rem; right: 2.5rem; z-index: 1055;">
-                {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}{% endif %}
-        {% endwith %}
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="position: fixed; top: 1.5rem; right: 2.5rem; z-index: 1055;">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        {% endfor %}{% endif %}{% endwith %}
     </main>
 
     <footer class="footer">

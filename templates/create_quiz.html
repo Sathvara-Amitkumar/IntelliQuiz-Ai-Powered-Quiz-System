@@ -282,7 +282,7 @@
                                         <span>Topic or Syllabus Content <span title="Paste your syllabus or describe the topic for AI generation" style="color: var(--primary-500); cursor: help;">ⓘ</span></span>
                                         <span id="prompt-counter" style="font-size: 0.875rem; color: var(--slate-500);">0/2000</span>
                                     </label>
-                                    <textarea id="prompt" name="prompt" rows="6" 
+                                    <textarea id="prompt" name="topic" rows="6" 
                                         style="resize: vertical; background: var(--slate-50); border: 1px solid var(--slate-200); font-size: 0.95rem;"
                                         placeholder="Describe your topic or paste syllabus content here. For example:
                                         
@@ -534,7 +534,8 @@ Click 'View Examples' to see sample questions"></textarea>
                             </div>
                             <div style="border-bottom: 1px solid var(--slate-200); margin-bottom: 1.5rem;">
                                 <h4 style="color: var(--primary-600);">MCQ Examples:</h4>
-                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0 1.5rem 0;">What is the capital of France?|London|Paris|Berlin|1
+                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0 1.5rem 0;">
+What is the capital of France?|London|Paris|Berlin|1
 Which planet is known as the Red Planet?|Venus|Mars|Jupiter|1
 What is 2+2?|3|4|5|1
 Who wrote Romeo and Juliet?|Charles Dickens|William Shakespeare|Jane Austen|1
@@ -542,11 +543,17 @@ What is the chemical symbol for water?|CO2|H2O|O2|1</pre>
                             </div>
                             <div>
                                 <h4 style="color: var(--primary-600);">Viva Examples:</h4>
-                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0;">Explain the process of photosynthesis in detail.
-Describe the causes and effects of climate change.
-What are the main principles of object-oriented programming?
-Discuss the impact of social media on modern society.
-Compare and contrast renewable and non-renewable energy sources.</pre>
+                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0;">
+What does AI stand for?|Automated Input|Artificial Intelligence|Advanced Integration|Algorithmic Interface|1
+
+Which type of AI is designed to perform a single specific task?|General AI|Super AI|Narrow AI|Cognitive AI|2
+
+Which programming language is most commonly used in AI development?|Java|C++|Python|Ruby|2
+
+What is the term for AI systems that learn from data?|Static AI|Rule-Based AI|Machine Learning|Symbolic AI|2
+
+Which AI concept involves training models on labeled data?|Unsupervised Learning|Supervised Learning|Reinforcement Learning|Deep Learning|1
+                                    </pre>
                             </div>
                         `;
                         
