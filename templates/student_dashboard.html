@@ -14,10 +14,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
     <style>
-        /* Consistent styling from other dashboards */
+        /* --- NEW STUDENT DASHBOARD STYLE (AMBER/YELLOW THEME) --- */
         :root {
-            --color-primary: #7367F0;
+            /* Changed primary color to a fresh amber/yellow */
+            --color-primary: #FF9F43;
+            --color-primary-light: #fff0e1; /* Light amber for backgrounds */
+            
             --color-success: #28C76F;
+            --color-success-light: #d4edda; /* Light green */
+            
+            --color-info: #7367F0; /* Using purple for one card for variety */
+            --color-info-light: #E8E7FD;
+
             --color-warning: #FF9F43;
             --color-white: #ffffff;
             --color-light-grey: #F8F7FA;
@@ -30,11 +38,17 @@
         /* Sidebar */
         .sidebar { width: var(--sidebar-width); background: var(--color-dark); color: #F8F7FA; display: flex; flex-direction: column; padding: 1.5rem; position: fixed; height: 100%; z-index: 1000; transition: transform 0.3s ease-in-out; }
         .sidebar-brand { font-size: 1.8rem; font-weight: 700; margin-bottom: 2.5rem; color: var(--color-white); padding-left: 0.5rem; text-decoration: none; }
-        .sidebar-brand span { color: var(--color-primary); }
+        .sidebar-brand span { color: var(--color-primary); } /* Will now be amber */
         .sidebar-menu a { display: flex; align-items: center; color: #b0afb4; padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 0.8rem; text-decoration: none; }
         .sidebar-menu a .material-icons-sharp { margin-right: 1.2rem; font-size: 1.6rem; }
         .sidebar-menu a h4 { font-weight: 500; font-size: 1rem; margin: 0; }
-        .sidebar-menu a.active, .sidebar-menu a:hover { background: var(--color-primary); color: var(--color-white); box-shadow: 0 5px 15px rgba(115, 103, 240, 0.4); }
+        
+        /* Updated hover/active shadow to match new amber */
+        .sidebar-menu a.active, .sidebar-menu a:hover { 
+            background: var(--color-primary); 
+            color: var(--color-white); 
+            box-shadow: 0 5px 15px rgba(255, 159, 67, 0.4); /* Amber shadow */
+        }
         .sidebar-footer { margin-top: auto; }
         
         /* Main Content */
@@ -46,9 +60,12 @@
         .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem; margin-bottom: 2.5rem; }
         .card { background: var(--color-white); padding: 2rem; border-radius: 15px; border: none; box-shadow: 0 4px 25px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 2rem; }
         .card-icon { font-size: 3rem; padding: 1.2rem; border-radius: 50%; display: flex; }
-        .card-icon.quizzes { background-color: #E8E7FD; color: var(--color-primary); }
-        .card-icon.completed { background-color: #d4edda; color: var(--color-success); }
-        .card-icon.score { background-color: #fff0e1; color: var(--color-warning); }
+        
+        /* Updated card icon colors for variety */
+        .card-icon.quizzes { background-color: var(--color-info-light); color: var(--color-info); } /* Purple */
+        .card-icon.completed { background-color: var(--color-success-light); color: var(--color-success); } /* Green */
+        .card-icon.score { background-color: var(--color-primary-light); color: var(--color-primary); } /* Amber */
+        
         .card-info h3 { font-size: 2.8rem; font-weight: 700; color: var(--color-dark); }
         .card-info p { color: #6E6B7B; margin: 0; font-size: 1rem; }
         .data-section { background: var(--color-white); border-radius: 15px; padding: 2rem; box-shadow: 0 4px 25px rgba(0,0,0,0.05); }
@@ -58,8 +75,11 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 1.2rem 1rem; text-align: left; border-bottom: 1px solid #f0f0f0; vertical-align: middle; white-space: nowrap; }
         thead th { font-weight: 600; font-size: 0.9rem; color: #6E6B7B; text-transform: uppercase; }
-        .btn-take-quiz { background-color: var(--color-primary); color: var(--color-white); text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease-in-out; }
-        .btn-take-quiz:hover { background-color: #6158d6; }
+        
+        /* Updated button colors */
+        .btn-take-quiz { background-color: var(--color-primary); color: var(--color-white); text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 500; transition: all 0.2s ease-in-out; border: none; cursor: pointer; }
+        .btn-take-quiz:hover { background-color: #e68a2e; } /* Darker amber */
+        
         .view { display: none; }
         .view.active { display: block; }
         
@@ -72,6 +92,7 @@
             .mobile-menu-btn { display: block; }
         }
     </style>
+
 </head>
 <body>
     <aside class="sidebar">

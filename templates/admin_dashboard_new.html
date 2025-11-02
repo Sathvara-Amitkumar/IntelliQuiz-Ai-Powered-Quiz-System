@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +15,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
         /* --- FINAL RESPONSIVE STYLES --- */
@@ -125,6 +127,7 @@
             <a href="#" class="nav-link active" data-view="dashboard-view"><span class="material-icons-sharp">dashboard</span><h4>Dashboard</h4></a>
             <a href="#" class="nav-link" data-view="students-view"><span class="material-icons-sharp">groups</span><h4>Students</h4></a>
             <a href="#" class="nav-link" data-view="teachers-view"><span class="material-icons-sharp">school</span><h4>Teachers</h4></a>
+            <a href="#" class="nav-link" data-view="contacts-view"><span class="material-icons-sharp">mail</span><h4>Contact Messages</h4></a>
         </div>
         <div class="sidebar-footer">
             <div class="social-icons">
@@ -152,6 +155,100 @@
         <div id="dashboard-view" class="view active"><div class="stat-cards"><div class="card"><div class="card-icon students"><span class="material-icons-sharp">groups</span></div><div class="card-info"><h3>{{ student_count }}</h3><p>Total Students</p></div></div><div class="card"><div class="card-icon teachers"><span class="material-icons-sharp">school</span></div><div class="card-info"><h3>{{ teacher_count }}</h3><p>Total Teachers</p></div></div></div></div>
         <div id="students-view" class="view"><div class="data-section"><div class="data-header"><h2>Student Management</h2><div class="action-buttons"><a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Create User</a><button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#resendCredentialsModal">Resend Credentials</button><button id="import-csv-btn-student" class="btn btn-outline-secondary">Import CSV</button><form action="{{ url_for('admin.refresh_passwords', role='student') }}" method="POST" onsubmit="return confirm('Are you sure? This will reset all student passwords.');"><button type="submit" class="btn btn-danger">Refresh Passwords</button></form></div></div><div class="table-responsive"><table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Password</th><th>Actions</th></tr></thead><tbody>{% for user in students %}<tr><td>{{ user.id }}</td><td>{{ user.username }}</td><td>{{ user.email }}</td><td>{{ user.password }}</td><td><div class="table-actions"><a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">Edit</a><form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this user?');"><button type="submit" class="btn btn-sm btn-outline-danger">Delete</button></form></div></td></tr>{% else %}<tr><td colspan="4" class="text-center p-5">No students found.</td></tr>{% endfor %}</tbody></table></div></div></div>
         <div id="teachers-view" class="view"><div class="data-section"><div class="data-header"><h2>Teacher Management</h2><div class="action-buttons"><a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Create User</a><button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#resendCredentialsModal">Resend Credentials</button><button id="import-csv-btn-teacher" class="btn btn-outline-secondary">Import CSV</button><form action="{{ url_for('admin.refresh_passwords', role='teacher') }}" method="POST" onsubmit="return confirm('Are you sure? This will reset all teacher passwords.');"><button type="submit" class="btn btn-danger">Refresh Passwords</button></form></div></div><div class="table-responsive"><table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Password</th><th>Actions</th></tr></thead><tbody>{% for user in teachers %}<tr><td>{{ user.id }}</td><td>{{ user.username }}</td><td>{{ user.email }}</td><td>{{ user.password }}</td><td><div class="table-actions"><a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">Edit</a><form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this user?');"><button type="submit" class="btn btn-sm btn-outline-danger">Delete</button></form></div></td></tr>{% else %}<tr><td colspan="4" class="text-center p-5">No teachers found.</td></tr>{% endfor %}</tbody></table></div></div></div>
+        <div id="contacts-view" class="view">
+            <div class="data-section">
+                <div class="contact-header">
+                    <div class="contact-title-wrapper">
+                        <span class="material-icons-sharp contact-title-icon">mail</span>
+                        <h2>Contact Messages</h2>
+                    </div>
+                    <div class="contact-count-badge">
+                        <span class="material-icons-sharp">inbox</span>
+                        <span>{{ contact_messages|length }} Message{{ 's' if contact_messages|length != 1 else '' }}</span>
+                    </div>
+                </div>
+                {% if contact_messages %}
+                <div class="contact-messages-container">
+                    <div class="contact-messages-table">
+                        <table class="contact-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for message in contact_messages %}
+                                <tr>
+                                    <td class="contact-name" data-label="Name">
+                                        <div class="contact-cell-content">
+                                            <span class="contact-name-icon">
+                                                <i class="fas fa-user"></i>
+                                            </span>
+                                            <span class="contact-text">{{ message.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="contact-email" data-label="Email">
+                                        <div class="contact-cell-content">
+                                            <span class="contact-email-icon">
+                                                <i class="fas fa-envelope"></i>
+                                            </span>
+                                            <a href="mailto:{{ message.email }}" class="contact-text">{{ message.email }}</a>
+                                        </div>
+                                    </td>
+                                    <td class="contact-message" data-label="Message">
+                                        <div class="contact-message-content">
+                                            <div class="message-preview">{{ message.message[:100] }}{% if message.message|length > 100 %}...{% endif %}</div>
+                                            {% if message.message|length > 100 %}
+                                            <button type="button" class="btn-view-message" data-message="{{ message.message|e }}" data-name="{{ message.name|e }}">
+                                                <i class="fas fa-eye"></i> View Full
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="contact-date" data-label="Date">
+                                        <div class="contact-cell-content">
+                                            <span class="date-icon">
+                                                <i class="fas fa-calendar"></i>
+                                            </span>
+                                            <span class="contact-text">
+                                                {% if message.created_at %}
+                                                    {% if message.created_at is string %}
+                                                        {{ message.created_at }}
+                                                    {% else %}
+                                                        {% set date_str = message.created_at.strftime('%Y-%m-%d %H:%M') if message.created_at else 'N/A' %}
+                                                        {{ date_str }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="contact-actions" data-label="Actions">
+                                        <form action="{{ url_for('admin.delete_contact', contact_id=message.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this message?');" class="contact-delete-form">
+                                            <button type="submit" class="btn-action btn-delete" title="Delete Message">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="contact-empty-state">
+                    <span class="material-icons-sharp empty-icon">inbox</span>
+                    <p>No contact messages yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </main>
 
     <div class="modal fade" id="resendCredentialsModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Resend User Credentials</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><form action="{{ url_for('admin.send_mail_route') }}" method="post"><div class="modal-body"><p>Select recipient to resend credentials.</p><div class="mb-3"><label for="recipient" class="form-label">Recipient</label><select class="form-select" id="recipient" name="recipient" required><option value="all_students">All Students</option><option value="all_teachers">All Teachers</option><option value="specific_user">Specific User</option></select></div><div class="mb-3" id="specific_user_email_div" style="display:none;"><label for="specific_user_email" class="form-label">User Email</label><input type="email" class="form-control" id="specific_user_email" name="specific_user_email"></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="submit" class="btn btn-primary">Send Credentials</button></div></form></div></div></div>
@@ -177,7 +274,13 @@
                     const viewId = link.getAttribute('data-view');
                     const targetView = document.getElementById(viewId);
                     
-                    const headerText = targetView.querySelector('h2') ? targetView.querySelector('h2').textContent : 'Dashboard';
+                    let headerText = 'Dashboard';
+                    const h2Element = targetView.querySelector('h2');
+                    if (h2Element) {
+                        headerText = h2Element.textContent.trim();
+                    } else if (viewId === 'contacts-view') {
+                        headerText = 'Contact Messages';
+                    }
                     document.querySelector('.main-content h1').textContent = headerText;
 
                     views.forEach(view => { view.classList.remove('active'); });
@@ -215,6 +318,74 @@
             document.getElementById('recipient').addEventListener('change', function () {
                 document.getElementById('specific_user_email_div').style.display = (this.value === 'specific_user') ? 'block' : 'none';
             });
+
+            // Contact Messages Modal
+            const messageModal = document.createElement('div');
+            messageModal.className = 'message-modal';
+            messageModal.innerHTML = `
+                <div class="message-modal-content">
+                    <div class="message-modal-header">
+                        <h3>
+                            <span class="material-icons-sharp">mail</span>
+                            Full Message
+                        </h3>
+                        <button type="button" class="message-modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="message-modal-info" id="messageInfo"></div>
+                    <div class="message-modal-body" id="messageBody"></div>
+                </div>
+            `;
+            document.body.appendChild(messageModal);
+
+            const closeModal = () => {
+                messageModal.classList.remove('active');
+            };
+
+            messageModal.querySelector('.message-modal-close').addEventListener('click', closeModal);
+            messageModal.addEventListener('click', (e) => {
+                if (e.target === messageModal) closeModal();
+            });
+
+            document.querySelectorAll('.btn-view-message').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const message = this.getAttribute('data-message');
+                    const name = this.getAttribute('data-name');
+                    const row = this.closest('tr');
+                    const emailElement = row.querySelector('.contact-email a');
+                    const email = emailElement ? emailElement.textContent.trim() : '';
+                    const dateElement = row.querySelector('.contact-date');
+                    let date = 'N/A';
+                    if (dateElement) {
+                        const dateText = dateElement.textContent || dateElement.innerText || '';
+                        date = dateText.replace(/[^\w\s-:]/g, '').trim();
+                    }
+                    
+                    document.getElementById('messageInfo').innerHTML = `
+                        <div class="message-modal-info-item">
+                            <i class="fas fa-user"></i>
+                            <strong>Name:</strong> <span>${escapeHtml(name)}</span>
+                        </div>
+                        <div class="message-modal-info-item">
+                            <i class="fas fa-envelope"></i>
+                            <strong>Email:</strong> <span>${escapeHtml(email)}</span>
+                        </div>
+                        <div class="message-modal-info-item">
+                            <i class="fas fa-calendar"></i>
+                            <strong>Date:</strong> <span>${escapeHtml(date)}</span>
+                        </div>
+                    `;
+                    document.getElementById('messageBody').textContent = message || '';
+                    messageModal.classList.add('active');
+                });
+            });
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
         });
     </script>
 </body>

@@ -261,7 +261,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const answersPayload = {};
             questionsData.forEach(function(q, index) {
                 if (studentAnswers[index] !== null) {
-                    const answer = q.optionMapping ? q.optionMapping.indexOf(studentAnswers[index]) : studentAnswers[index];
+                    // studentAnswers[index] already stores the original (correct) answer index
+                    // We don't need to look it up in optionMapping - just use it directly
+                    const answer = studentAnswers[index];
                     answersPayload[q.id] = answer;
                 }
             });

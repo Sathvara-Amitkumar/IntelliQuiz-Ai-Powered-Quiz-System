@@ -6,369 +6,799 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create New Quiz</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Create Quiz Page Specific Styles */
+        .create-quiz-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--accent-50) 100%);
+            padding: 2rem 1rem;
+        }
+        
+        .create-quiz-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        
+        .create-quiz-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .create-quiz-header h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--primary-600), var(--accent-600));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+        
+        .create-quiz-header p {
+            font-size: 1.125rem;
+            color: var(--slate-600);
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .back-btn-wrapper {
+            margin-bottom: 2rem;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: white;
+            color: var(--slate-700);
+            border: 1px solid var(--slate-300);
+            border-radius: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .back-btn:hover {
+            background: var(--slate-50);
+            border-color: var(--slate-400);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .main-quiz-card {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            padding: 2.5rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @media (max-width: 768px) {
+            .main-quiz-card {
+                padding: 1.5rem;
+                border-radius: 1rem;
+            }
+            
+            .create-quiz-header h1 {
+                font-size: 2rem;
+            }
+            
+            .create-quiz-header p {
+                font-size: 1rem;
+            }
+        }
+        
+        .step-indicator-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--slate-200);
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .step {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .step.inactive {
+            background: var(--slate-200);
+            color: var(--slate-600);
+        }
+        
+        .step-connector {
+            width: 4rem;
+            height: 2px;
+            background: var(--slate-200);
+            border-radius: 2px;
+        }
+        
+        .step-label {
+            font-weight: 500;
+            color: var(--slate-700);
+        }
+        
+        .step-label.active {
+            color: var(--primary-600);
+            font-weight: 600;
+        }
+        
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+        
+        .settings-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            border: 1px solid var(--slate-100);
+            transition: all 0.3s ease;
+        }
+        
+        .settings-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        
+        .settings-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--slate-100);
+        }
+        
+        .settings-card-header svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary-600);
+        }
+        
+        .settings-card-header h2 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: var(--slate-800);
+            margin: 0;
+        }
+        
+        .question-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            border: 1px solid var(--slate-100);
+            margin-bottom: 2rem;
+        }
+        
+        .question-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--slate-100);
+        }
+        
+        .question-section-header svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary-600);
+        }
+        
+        .question-section-header h2 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: var(--slate-800);
+            margin: 0;
+        }
+        
+        .generation-mode-toggle {
+            display: flex;
+            gap: 1rem;
+            padding: 0.5rem;
+            background: var(--slate-100);
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .generation-mode-toggle label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: var(--slate-700);
+        }
+        
+        .generation-mode-toggle input[type="radio"]:checked + label,
+        .generation-mode-toggle label:has(input[type="radio"]:checked) {
+            background: white;
+            color: var(--primary-600);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .generation-mode-toggle input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .ai-generation-section {
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--accent-50) 100%);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 2px solid var(--primary-200);
+            margin-bottom: 2rem;
+        }
+        
+        .manual-generation-section {
+            background: linear-gradient(135deg, var(--slate-50) 0%, var(--slate-100) 100%);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 2px solid var(--slate-200);
+            margin-bottom: 2rem;
+        }
+        
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .section-badge.ai {
+            background: var(--primary-100);
+            color: var(--primary-700);
+        }
+        
+        .section-badge.manual {
+            background: var(--slate-200);
+            color: var(--slate-700);
+        }
+        
+        .tips-box {
+            background: white;
+            border: 1px solid var(--primary-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+        
+        .tips-box h4 {
+            color: var(--primary-700);
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        
+        .tips-box ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .tips-box li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--slate-700);
+            margin-bottom: 0.5rem;
+        }
+        
+        .tips-box li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .tips-box svg {
+            width: 16px;
+            height: 16px;
+            color: var(--primary-600);
+            flex-shrink: 0;
+        }
+        
+        .file-upload-zone {
+            background: var(--slate-50);
+            border: 2px dashed var(--slate-300);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .file-upload-zone:hover {
+            border-color: var(--primary-400);
+            background: var(--primary-50);
+        }
+        
+        .file-upload-zone.dragover {
+            border-color: var(--primary-500);
+            background: var(--primary-100);
+        }
+        
+        .file-upload-zone svg {
+            width: 48px;
+            height: 48px;
+            color: var(--slate-400);
+            margin-bottom: 1rem;
+        }
+        
+        .security-features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .feature-category {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--slate-200);
+        }
+        
+        .feature-category h4 {
+            color: var(--primary-700);
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .feature-category ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.85rem;
+        }
+        
+        .feature-category li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--slate-700);
+        }
+        
+        .feature-category li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .mode-selector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+        
+        .mode-option {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .mode-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .mode-box {
+            border: 2px solid var(--slate-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .mode-option:hover .mode-box {
+            border-color: var(--primary-300);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .mode-option input[type="radio"]:checked + .mode-box {
+            border-color: var(--primary-500);
+            background: linear-gradient(135deg, var(--primary-50), var(--accent-50));
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+        
+        .mode-icon {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+            color: var(--slate-500);
+            transition: color 0.3s ease;
+        }
+        
+        .mode-option input[type="radio"]:checked + .mode-box .mode-icon {
+            color: var(--primary-600);
+        }
+        
+        .mode-box > div:not(.mode-icon) {
+            font-weight: 600;
+            color: var(--slate-800);
+            margin-bottom: 0.25rem;
+        }
+        
+        .mode-box > div:last-child {
+            font-size: 0.875rem;
+            color: var(--slate-500);
+            font-weight: 400;
+        }
+        
+        .form-actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--slate-200);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .form-actions-left,
+        .form-actions-right {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 640px) {
+            .form-actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .form-actions-left,
+            .form-actions-right {
+                width: 100%;
+            }
+            
+            .form-actions-left button,
+            .form-actions-right button {
+                width: 100%;
+            }
+        }
+        
+        .preview-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 1px solid var(--slate-200);
+        }
+        
+        .status-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .char-counter {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--slate-500);
+            background: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+        }
+        
+        .info-icon {
+            color: var(--primary-500);
+            cursor: help;
+            margin-left: 0.25rem;
+        }
+    </style>
 </head>
-<body style="background-color: var(--slate-100);">
-    <div class="container" style="padding-top: 2rem; padding-bottom: 2rem; max-width: 1200px;">
-        <header style="margin-bottom: 2rem;">
-            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary" style="margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+<body class="create-quiz-page">
+    <div class="create-quiz-container">
+        <div class="back-btn-wrapper">
+            <a href="{{ url_for('teacher.dashboard') }}" class="back-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
                 Back to Dashboard
             </a>
-            <h1 style="font-size: 2.5rem; color: var(--slate-900); margin-bottom: 0.5rem;">Create a New Quiz</h1>
-            <p style="font-size: 1.1rem; color: var(--slate-600); max-width: 600px;">Design your quiz using AI-generated questions or add your own custom questions. Set up quiz parameters and enable anti-cheating features.</p>
-        </header>
+        </div>
+        
+        <div class="create-quiz-header">
+            <h1>Create a New Quiz</h1>
+            <p>Design your quiz using AI-generated questions or add your own custom questions. Set up quiz parameters and enable anti-cheating features.</p>
+        </div>
 
-        <div class="card" style="background: linear-gradient(to bottom, white, var(--slate-50));">
+        <div class="main-quiz-card">
             <form id="create-quiz-form" method="POST" action="{{ url_for('teacher.preview_generated_questions') }}" enctype="multipart/form-data">
-                <div class="step-indicator" style="display: flex; justify-content: center; margin-bottom: 2rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span class="step active" style="background: var(--primary-500); color: white; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 50%;">1</span>
-                        <span style="color: var(--primary-600); font-weight: 500;">Quiz Settings</span>
-                        <span style="width: 3rem; height: 2px; background: var(--slate-200);"></span>
-                        <span class="step" style="background: var(--slate-200); color: var(--slate-600); width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 50%;">2</span>
-                        <span style="color: var(--slate-600);">Question Setup</span>
+                <div class="step-indicator-wrapper">
+                    <div class="step-indicator">
+                        <span class="step active">1</span>
+                        <span class="step-label active">Quiz Settings</span>
+                        <span class="step-connector"></span>
+                        <span class="step inactive">2</span>
+                        <span class="step-label">Question Setup</span>
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
-                    <div class="settings-section" style="background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <h2 style="font-size: 1.25rem; color: var(--slate-800); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                             </svg>
-                            Basic Settings
-                        </h2>
-                        <div class="form-group">
-                            <label for="title">Quiz Title <span title="Give your quiz a descriptive name." style="color: var(--primary-500); cursor: help;">ⓘ</span></label>
-                            <input type="text" id="title" name="title" placeholder="e.g., Introduction to Photosynthesis" required 
-                                style="border: 1px solid var(--slate-200); background: var(--slate-50);">
+                            <h2>Basic Settings</h2>
                         </div>
                         <div class="form-group">
-                            <label for="num_questions">Number of Questions <span title="How many questions should be generated?" style="color: var(--primary-500); cursor: help;">ⓘ</span></label>
-                            <input type="number" id="num_questions" name="num_questions" value="5" min="1" required
-                                style="border: 1px solid var(--slate-200); background: var(--slate-50);">
+                            <label for="title">Quiz Title <span class="info-icon" title="Give your quiz a descriptive name.">ⓘ</span></label>
+                            <input type="text" id="title" name="title" placeholder="e.g., Introduction to Photosynthesis" required>
                         </div>
                         <div class="form-group">
-                            <label for="time_limit">Time Limit (Minutes) <span title="Set a time limit for the quiz." style="color: var(--primary-500); cursor: help;">ⓘ</span></label>
-                            <input type="number" id="time_limit" name="time_limit" value="10" min="1" required
-                                style="border: 1px solid var(--slate-200); background: var(--slate-50);">
+                            <label for="num_questions">Number of Questions <span class="info-icon" title="How many questions should be generated?">ⓘ</span></label>
+                            <input type="number" id="num_questions" name="num_questions" value="5" min="1" required>
                         </div>
                         <div class="form-group">
-                            <label>Quiz Mode <span title="Choose MCQ for multiple choice or Viva for open-ended questions." style="color: var(--primary-500); cursor: help;">ⓘ</span></label>
-                            <div class="mode-selector" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
-                                <label class="mode-option" style="cursor: pointer; position: relative;" onclick="updateModeSelection(this, 'mcq')">
-                                    <input type="radio" name="mode" value="mcq" checked style="position: absolute; opacity: 0;">
-                                    <div class="mode-box" style="border: 2px solid var(--slate-200); border-radius: 0.5rem; padding: 1rem; text-align: center; transition: all 0.2s;">
-                                        <div class="mode-icon" style="height: 48px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+                            <label for="time_limit">Time Limit (Minutes) <span class="info-icon" title="Set a time limit for the quiz.">ⓘ</span></label>
+                            <input type="number" id="time_limit" name="time_limit" value="10" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Quiz Mode <span class="info-icon" title="Choose MCQ for multiple choice or Viva for open-ended questions.">ⓘ</span></label>
+                            <div class="mode-selector-grid">
+                                <label class="mode-option" onclick="updateModeSelection(this, 'mcq')">
+                                    <input type="radio" name="mode" value="mcq" checked>
+                                    <div class="mode-box">
+                                        <div class="mode-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <circle cx="12" cy="12" r="10"/>
                                                 <path d="M9 12l2 2 4-4"/>
                                             </svg>
                                         </div>
-                                        <div style="font-weight: 500;">MCQ</div>
-                                        <div style="font-size: 0.875rem; color: var(--slate-500);">Multiple Choice</div>
-                                    </div>
-                                </label>
-                                <label class="mode-option" style="cursor: pointer; position: relative;" onclick="updateModeSelection(this, 'viva')">
-                                    <input type="radio" name="mode" value="viva" style="position: absolute; opacity: 0;">
-                                    <div class="mode-box" style="border: 2px solid var(--slate-200); border-radius: 0.5rem; padding: 1rem; text-align: center; transition: all 0.2s;">
-                                        <div class="mode-icon" style="height: 48px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                                            </svg>
-                                        </div>
-                                        <div style="font-weight: 500;">Viva</div>
-                                        <div style="font-size: 0.875rem; color: var(--slate-500);">Open-ended</div>
+                                        <div>MCQ</div>
+                                        <div>Multiple Choice</div>
                                     </div>
                                 </label>
                             </div>
-                            <style>
-                                .mode-option input:checked + .mode-box {
-                                    border-color: var(--primary-500);
-                                    background: var(--primary-50);
-                                    box-shadow: 0 0 0 1px var(--primary-500);
-                                }
-                                
-                                .mode-option input:checked + .mode-box .mode-icon {
-                                    color: var(--primary-600);
-                                }
-                                
-                                .mode-option:hover .mode-box:not(:has(input:checked)) {
-                                    border-color: var(--slate-300);
-                                    background: var(--slate-50);
-                                }
-
-                                .mode-box {
-                                    position: relative;
-                                    overflow: hidden;
-                                }
-
-                                .mode-box::before {
-                                    content: '';
-                                    position: absolute;
-                                    top: 0;
-                                    left: 0;
-                                    right: 0;
-                                    bottom: 0;
-                                    background: var(--primary-100);
-                                    opacity: 0;
-                                    transition: opacity 0.2s;
-                                    pointer-events: none;
-                                }
-
-                                .mode-option:active .mode-box::before {
-                                    opacity: 0.5;
-                                }
-                            </style>
-                            <script>
-                                function updateModeSelection(element, mode) {
-                                    // Update radio button
-                                    const radio = element.querySelector('input[type="radio"]');
-                                    radio.checked = true;
-
-                                    // Update visual states of all options
-                                    document.querySelectorAll('.mode-option').forEach(option => {
-                                        const box = option.querySelector('.mode-box');
-                                        const icon = option.querySelector('.mode-icon');
-                                        const isSelected = option.querySelector('input[type="radio"]').checked;
-                                        
-                                        box.style.borderColor = isSelected ? 'var(--primary-500)' : 'var(--slate-200)';
-                                        box.style.background = isSelected ? 'var(--primary-50)' : 'white';
-                                        icon.style.color = isSelected ? 'var(--primary-600)' : 'currentColor';
-                                    });
-
-                                    // Trigger mode change event
-                                    const event = new Event('change');
-                                    radio.dispatchEvent(event);
-                                }
-
-                                // Set initial state
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const checkedOption = document.querySelector('.mode-option input:checked');
-                                    if (checkedOption) {
-                                        updateModeSelection(checkedOption.closest('.mode-option'), checkedOption.value);
-                                    }
-                                });
-                            </script>
                         </div>
                     </div>
 
-                    <div class="settings-section" style="background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <h2 style="font-size: 1.25rem; color: var(--slate-800); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                             </svg>
-                            Security Settings
-                        </h2>
+                            <h2>Security Settings</h2>
+                        </div>
                         <div class="form-group">
-                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                                <label for="anti_cheat_master" style="margin: 0; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="checkbox" id="anti_cheat_master" name="anti_cheat_master" checked
-                                        style="width: 1.2rem; height: 1.2rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);"
-                                        onchange="toggleAllFeatures(this.checked)">
-                                    <span style="font-weight: 500;">Enable All Anti-Cheating Features</span>
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: var(--primary-50); border-radius: 0.75rem; border: 1px solid var(--primary-200);">
+                                <label for="anti_cheat_master" style="margin: 0; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; flex: 1;">
+                                    <input type="checkbox" id="anti_cheat_master" name="anti_cheat_master" checked style="width: 1.25rem; height: 1.25rem;" onchange="toggleAllFeatures(this.checked)">
+                                    <span style="font-weight: 600; color: var(--primary-700);">Enable All Anti-Cheating Features</span>
                                 </label>
-                                <span title="Comprehensive security measures to ensure quiz integrity" style="color: var(--primary-500); cursor: help;">ⓘ</span>
+                                <span class="info-icon" title="Comprehensive security measures to ensure quiz integrity">ⓘ</span>
                             </div>
                             
-                            <div class="security-features" style="background: linear-gradient(to right, var(--primary-50), var(--slate-50)); border-radius: 0.75rem; padding: 1.2rem; border: 1px solid var(--primary-100);">
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                                    <div class="feature-group">
-                                        <h4 style="color: var(--primary-700); margin-bottom: 0.5rem; font-size: 0.9rem;">Question Security</h4>
-                                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--slate-700);">
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="random_question_order" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Randomized question order</span>
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="random_option_order" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Randomized option order</span>
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="plagiarism_detection" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Plagiarism detection</span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div class="feature-group">
-                                        <h4 style="color: var(--primary-700); margin-bottom: 0.5rem; font-size: 0.9rem;">Time Control</h4>
-                                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--slate-700);">
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="strict_time_limits" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Strict time limits</span>
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="auto_submit" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Auto-submit on timeout</span>
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="speed_monitoring" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Speed monitoring</span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <div class="feature-group">
-                                        <h4 style="color: var(--primary-700); margin-bottom: 0.5rem; font-size: 0.9rem;">Browser Security</h4>
-                                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--slate-700);">
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="copy_paste_prevention" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Copy/paste prevention</span>
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="tab_switch_detection" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Tab switch detection</span>
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="fullscreen_mode" class="anti-cheat-feature" checked
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Full-screen mode</span>
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <input type="checkbox" name="duplicate_login_detection" class="anti-cheat-feature"
-                                                    style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                                <span>Duplicate login detection</span>
-                                            </li>
-                                        </ul>
-                                    </div>
+                            <div class="security-features-grid">
+                                <div class="feature-category">
+                                    <h4>Time Control</h4>
+                                    <ul>
+                                        <li>
+                                            <input type="checkbox" name="strict_time_limits" class="anti-cheat-feature" checked style="width: 1rem; height: 1rem;">
+                                            <span>Strict time limits</span>
+                                        </li>
+                                        <li>
+                                            <input type="checkbox" name="auto_submit" class="anti-cheat-feature" checked style="width: 1rem; height: 1rem;">
+                                            <span>Auto-submit on timeout</span>
+                                        </li>
+                                        <li>
+                                            <input type="checkbox" name="speed_monitoring" class="anti-cheat-feature" checked style="width: 1rem; height: 1rem;">
+                                            <span>Speed monitoring</span>
+                                        </li>
+                                        <li>
+                                            <input type="checkbox" name="random_option_order" class="anti-cheat-feature" checked style="width: 1rem; height: 1rem;">
+                                            <span>Randomized option order</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="feature-category">
+                                    <h4>Browser Security</h4>
+                                    <ul>
+                                        <li>
+                                            <input type="checkbox" name="tab_switch_detection" class="anti-cheat-feature" checked style="width: 1rem; height: 1rem;">
+                                            <span>Tab switch detection</span>
+                                        </li>
+                                        <li>
+                                            <input type="checkbox" name="fullscreen_mode" class="anti-cheat-feature" checked style="width: 1rem; height: 1rem;">
+                                            <span>Full-screen mode</span>
+                                        </li>
+                                        <li>
+                                            <input type="checkbox" name="duplicate_login_detection" class="anti-cheat-feature" style="width: 1rem; height: 1rem;">
+                                            <span>Duplicate login detection</span>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="question-section" style="background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 2rem;">
-                        <h2 style="font-size: 1.25rem; color: var(--slate-800); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 16v-4"/>
-                                <path d="M12 8h.01"/>
+                </div>
+                    
+                <div class="question-section">
+                    <div class="question-section-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 16v-4"/>
+                            <path d="M12 8h.01"/>
+                        </svg>
+                        <h2>Question Generation</h2>
+                    </div>
+                    
+                    <div class="generation-mode-toggle">
+                        <input type="radio" name="generation_mode" id="gen_mode_ai" value="ai" checked>
+                        <label for="gen_mode_ai">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                             </svg>
-                            Question Generation
-                        </h2>
-                        
-                        <div class="generation-mode" style="margin-bottom: 1.5rem;">
-                            <h4 style="color: var(--primary-700); margin-bottom: 1rem; font-size: 0.9rem;">Question Generation Mode</h4>
-                            <div style="display: flex; gap: 2rem; margin-bottom: 1rem;">
-                                <label style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <input type="checkbox" name="use_ai_generation" id="use_ai_generation" checked
-                                        style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                    <span>AI Generation</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <input type="checkbox" name="use_manual_entry" id="use_manual_entry"
-                                        style="width: 1rem; height: 1rem; border-radius: 0.25rem; border: 2px solid var(--slate-300);">
-                                    <span>Manual Entry</span>
-                                </label>
-                            </div>
-                        </div>
+                            AI Generation
+                        </label>
+                        <input type="radio" name="generation_mode" id="gen_mode_manual" value="manual">
+                        <label for="gen_mode_manual">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            Manual Entry
+                        </label>
+                    </div>
 
-                        <div class="tabs" style="margin-bottom: 1.5rem;">
-                            <div style="display: flex; gap: 1rem; border-bottom: 2px solid var(--slate-200); margin-bottom: 1.5rem;">
-                                <button type="button" class="tab-btn active" onclick="switchTab('ai')" style="padding: 0.75rem 1.5rem; border: none; background: none; cursor: pointer; font-weight: 500; color: var(--primary-600); border-bottom: 2px solid var(--primary-500); margin-bottom: -2px;">AI Generation</button>
-                                <button type="button" class="tab-btn" onclick="switchTab('manual')" style="padding: 0.75rem 1.5rem; border: none; background: none; cursor: pointer; font-weight: 500; color: var(--slate-600);">Manual Entry</button>
-                            </div>
-                            
-                            <div id="ai-tab" class="tab-content" style="animation: fadeIn 0.3s ease-out;">
-                                <div class="form-group">
-                                    <label for="prompt" style="display: flex; justify-content: space-between; align-items: center;">
-                                        <span>Topic or Syllabus Content <span title="Paste your syllabus or describe the topic for AI generation" style="color: var(--primary-500); cursor: help;">ⓘ</span></span>
-                                        <span id="prompt-counter" style="font-size: 0.875rem; color: var(--slate-500);">0/2000</span>
-                                    </label>
-                                    <textarea id="prompt" name="topic" rows="6" 
-                                        style="resize: vertical; background: var(--slate-50); border: 1px solid var(--slate-200); font-size: 0.95rem;"
-                                        placeholder="Describe your topic or paste syllabus content here. For example:
-                                        
+                    <div id="ai-tab" class="tab-content ai-generation-section">
+                        <span class="section-badge ai">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                            AI-Powered Generation
+                        </span>
+                        <div class="form-group">
+                            <label for="prompt">
+                                <span>Topic or Syllabus Content <span class="info-icon" title="Paste your syllabus or describe the topic for AI generation">ⓘ</span></span>
+                                <span id="prompt-counter" class="char-counter">0/2000</span>
+                            </label>
+                            <div class="input-wrapper">
+                                <textarea id="prompt" name="topic" rows="6" 
+                                    placeholder="Describe your topic or paste syllabus content here. For example:
+
 'Create a quiz about the American Revolution, covering:
 - Key events and dates
 - Important figures and their roles
 - Causes and effects
 - Major battles and their outcomes
 - The significance of key documents'"></textarea>
-                                    <div style="background: var(--primary-50); border: 1px solid var(--primary-100); border-radius: 0.5rem; padding: 1rem; margin-top: 0.5rem;">
-                                        <h4 style="color: var(--primary-700); margin-bottom: 0.5rem; font-size: 0.9rem;">Tips for Better AI Generation:</h4>
-                                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--slate-700);">
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M20 6L9 17l-5-5"/>
-                                                </svg>
-                                                Be specific about topics and subtopics
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M20 6L9 17l-5-5"/>
-                                                </svg>
-                                                Mention the desired difficulty level
-                                            </li>
-                                            <li style="display: flex; align-items: center; gap: 0.5rem;">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M20 6L9 17l-5-5"/>
-                                                </svg>
-                                                Include key concepts you want to test
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
                             </div>
-                            
-                            <div id="manual-tab" class="tab-content" style="display: none;">
-                                <div class="form-group">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                        <label for="manual_questions" style="margin: 0;">
-                                            <span>Manual Questions <span title="Add your own custom questions" style="color: var(--primary-500); cursor: help;">ⓘ</span></span>
-                                        </label>
-                                        <div style="display: flex; align-items: center;">
-                                            <button type="button" onclick="showExamples()" 
-                                                style="background: var(--primary-50); border: none; color: var(--primary-600); font-size: 0.9rem; cursor: pointer; padding: 0.5rem 1rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.5rem;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-                                                </svg>
-                                                View Examples
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <textarea id="manual_questions" name="manual_questions" rows="8"
-                                        style="resize: vertical; background: var(--slate-50); border: 1px solid var(--slate-200); font-size: 0.95rem;"
-                                        placeholder="Add your questions here, one per line:
+                            <div class="tips-box">
+                                <h4>Tips for Better AI Generation:</h4>
+                                <ul>
+                                    <li>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 6L9 17l-5-5"/>
+                                        </svg>
+                                        Be specific about topics and subtopics
+                                    </li>
+                                    <li>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 6L9 17l-5-5"/>
+                                        </svg>
+                                        Mention the desired difficulty level
+                                    </li>
+                                    <li>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 6L9 17l-5-5"/>
+                                        </svg>
+                                        Include key concepts you want to test
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="manual-tab" class="tab-content manual-generation-section" style="display: none;">
+                        <span class="section-badge manual">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            Manual Question Entry
+                        </span>
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <label for="manual_questions" style="margin: 0;">
+                                    <span>Manual Questions <span class="info-icon" title="Add your own custom questions">ⓘ</span></span>
+                                </label>
+                                <button type="button" onclick="showExamples()" 
+                                    class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                                    </svg>
+                                    View Examples
+                                </button>
+                            </div>
+                            <textarea id="manual_questions" name="manual_questions" rows="8"
+                                placeholder="Add your questions here, one per line:
 
 For MCQ: Question|Option1|Option2|Option3|CorrectIndex
 For Viva: Just type your question
 
 Click 'View Examples' to see sample questions"></textarea>
-                                    <div id="format-error" class="error-message" style="display: none; margin-top: 0.5rem;"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group file-upload" style="background: var(--slate-50); border-radius: 0.75rem; padding: 1.5rem; border: 2px dashed var(--slate-200);">
-                            <label for="question_files" style="margin-bottom: 1rem; display: block;">
-                                <div style="text-align: center;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 0.5rem;">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                        <polyline points="17 8 12 3 7 8"/>
-                                        <line x1="12" y1="3" x2="12" y2="15"/>
-                                    </svg>
-                                    <div style="font-weight: 500; color: var(--slate-700);">Drop files here or click to upload</div>
-                                    <div style="font-size: 0.875rem; color: var(--slate-500);">Support for images, PDFs, Word docs, and PowerPoint files</div>
-                                </div>
-                            </label>
-                            <input type="file" id="question_files" name="question_files" multiple 
-                                accept="image/*,.pdf,.doc,.docx,.ppt,.pptx"
-                                style="display: none;">
-                            <div id="file-list" style="margin-top: 1rem;"></div>
+                            <div id="format-error" class="error-message" style="display: none; margin-top: 0.75rem;"></div>
                         </div>
                     </div>
+
+                    <div class="form-group file-upload">
+                        <label for="question_files" class="file-upload-zone">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <div style="font-weight: 600; color: var(--slate-700); margin-bottom: 0.5rem;">Drop files here or click to upload</div>
+                            <div style="font-size: 0.875rem; color: var(--slate-500);">Support for images, PDFs, Word docs, and PowerPoint files</div>
+                        </label>
+                        <input type="file" id="question_files" name="question_files" multiple 
+                            accept="image/*,.pdf,.doc,.docx,.ppt,.pptx"
+                            style="display: none;">
+                        <div id="file-list" style="margin-top: 1rem;"></div>
                     </div>
                 </div>
                 
-                <div id="quiz-preview" class="preview-section" style="background: white; border-radius: 0.75rem; padding: 1.5rem; margin: 2rem 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: none;">
+                <div id="quiz-preview" class="preview-section" style="display: none;">
                     <h3 style="font-size: 1.25rem; color: var(--slate-800); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
@@ -376,15 +806,14 @@ Click 'View Examples' to see sample questions"></textarea>
                         </svg>
                         Quiz Preview
                     </h3>
-                    <div class="preview-content" style="border: 1px solid var(--slate-200); border-radius: 0.5rem; padding: 1.5rem;"></div>
+                    <div class="preview-content" style="border: 1px solid var(--slate-200); border-radius: 0.75rem; padding: 1.5rem; background: var(--slate-50);"></div>
                 </div>
 
                 <div id="form-status" class="error-message" style="display: none; margin-bottom: 1rem;"></div>
                 
-                <div class="form-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--slate-200);">
-                    <div class="action-group-left">
-                        <button type="button" id="check-btn" class="btn" 
-                            style="background: var(--slate-100); color: var(--slate-700); border: 1px solid var(--slate-200); display: inline-flex; align-items: center; gap: 0.5rem;">
+                <div class="form-actions-bar">
+                    <div class="form-actions-left">
+                        <button type="button" id="check-btn" class="btn btn-secondary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20 6L9 17l-5-5"/>
                             </svg>
@@ -392,16 +821,15 @@ Click 'View Examples' to see sample questions"></textarea>
                         </button>
                     </div>
                     
-                    <div class="action-group-right" style="display: flex; gap: 1rem;">
-                        <button type="button" id="preview-btn" class="btn" 
-                            style="background: var(--primary-50); color: var(--primary-700); border: 1px solid var(--primary-200); display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <div class="form-actions-right">
+                        <button type="button" id="preview-btn" class="btn" style="background: var(--primary-50); color: var(--primary-700); border: 1px solid var(--primary-200);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
                             Preview Quiz
                         </button>
-                        <button type="submit" id="generate-btn" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(to right, var(--primary-600), var(--primary-700));">
+                        <button type="submit" id="generate-btn" class="btn btn-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M5 12h14"/>
                                 <path d="M12 5l7 7-7 7"/>
@@ -411,683 +839,127 @@ Click 'View Examples' to see sample questions"></textarea>
                     </div>
                 </div>
                 
-                <div id="check-status" class="status-message" style="display: none; margin-top: 1rem; padding: 1rem; border-radius: 0.5rem;"></div>
-                <script>
-                // Function to toggle all anti-cheating features
-                function toggleAllFeatures(checked) {
-                    document.querySelectorAll('.anti-cheat-feature').forEach(checkbox => {
-                        checkbox.checked = checked;
-                    });
-                }
-
-                // Function to update master checkbox based on individual selections
-                function updateMasterCheckbox() {
-                    const features = document.querySelectorAll('.anti-cheat-feature');
-                    const masterCheckbox = document.getElementById('anti_cheat_master');
-                    const allChecked = Array.from(features).every(checkbox => checkbox.checked);
-                    masterCheckbox.checked = allChecked;
-                }
-
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Generation mode handling
-                    const aiCheck = document.getElementById('use_ai_generation');
-                    const manualCheck = document.getElementById('use_manual_entry');
-                    const aiTab = document.querySelector('.tab-btn[onclick*="ai"]');
-                    const manualTab = document.querySelector('.tab-btn[onclick*="manual"]');
-
-                    function updateTabs() {
-                        const aiEnabled = aiCheck.checked;
-                        const manualEnabled = manualCheck.checked;
-
-                        // Ensure at least one option is selected
-                        if (!aiEnabled && !manualEnabled) {
-                            this.checked = true;
-                            return;
-                        }
-
-                        // Update tab visibility and state
-                        aiTab.style.display = aiEnabled ? 'block' : 'none';
-                        manualTab.style.display = manualEnabled ? 'block' : 'none';
-
-                        // If current tab is disabled, switch to the enabled tab
-                        const currentTab = document.querySelector('.tab-btn.active');
-                        if ((currentTab === aiTab && !aiEnabled) || 
-                            (currentTab === manualTab && !manualEnabled)) {
-                            if (aiEnabled) switchTab('ai');
-                            else if (manualEnabled) switchTab('manual');
-                        }
-
-                        // Hide tabs container if only one option is enabled
-                        const tabsContainer = document.querySelector('.tabs > div');
-                        tabsContainer.style.display = (aiEnabled && manualEnabled) ? 'flex' : 'none';
-                    }
-
-                    aiCheck.addEventListener('change', updateTabs);
-                    manualCheck.addEventListener('change', updateTabs);
-                    updateTabs();  // Initial state
-
-                    // Set up event listeners for individual checkboxes
-                    document.querySelectorAll('.anti-cheat-feature').forEach(checkbox => {
-                        checkbox.addEventListener('change', updateMasterCheckbox);
-                    });
-
-                    // Make toggleAllFeatures available globally
-                    window.toggleAllFeatures = toggleAllFeatures;
-
-                    // Tab switching functionality
-                    window.switchTab = function(tabName) {
-                        document.querySelectorAll('.tab-btn').forEach(btn => {
-                            btn.classList.remove('active');
-                            btn.style.color = 'var(--slate-600)';
-                            btn.style.borderBottom = 'none';
-                        });
-                        
-                        document.querySelectorAll('.tab-content').forEach(content => {
-                            content.style.display = 'none';
-                        });
-                        
-                        const activeBtn = document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
-                        activeBtn.classList.add('active');
-                        activeBtn.style.color = 'var(--primary-600)';
-                        activeBtn.style.borderBottom = '2px solid var(--primary-500)';
-                        
-                        document.getElementById(`${tabName}-tab`).style.display = 'block';
-                    }
-
-                    // Example modal functionality
-                    window.showExamples = function() {
-                        const modal = document.createElement('div');
-                        modal.style.cssText = `
-                            position: fixed;
-                            top: 0;
-                            left: 0;
-                            right: 0;
-                            bottom: 0;
-                            background: rgba(0,0,0,0.5);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            z-index: 1000;
-                        `;
-                        
-                        const content = document.createElement('div');
-                        content.style.cssText = `
-                            background: white;
-                            padding: 2rem;
-                            border-radius: 0.75rem;
-                            max-width: 600px;
-                            width: 90%;
-                            max-height: 80vh;
-                            overflow-y: auto;
-                            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-                        `;
-                        
-                        content.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                                <h3 style="font-size: 1.25rem; color: var(--slate-800);">Example Questions</h3>
-                                <button onclick="this.closest('div[style*=fixed]').remove()" style="background: none; border: none; cursor: pointer;">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="18" y1="6" x2="6" y2="18"/>
-                                        <line x1="6" y1="6" x2="18" y2="18"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div style="border-bottom: 1px solid var(--slate-200); margin-bottom: 1.5rem;">
-                                <h4 style="color: var(--primary-600);">MCQ Examples:</h4>
-                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0 1.5rem 0;">
-What is the capital of France?|London|Paris|Berlin|1
-Which planet is known as the Red Planet?|Venus|Mars|Jupiter|1
-What is 2+2?|3|4|5|1
-Who wrote Romeo and Juliet?|Charles Dickens|William Shakespeare|Jane Austen|1
-What is the chemical symbol for water?|CO2|H2O|O2|1</pre>
-                            </div>
-                            <div>
-                                <h4 style="color: var(--primary-600);">Viva Examples:</h4>
-                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0;">
-What does AI stand for?|Automated Input|Artificial Intelligence|Advanced Integration|Algorithmic Interface|1
-
-Which type of AI is designed to perform a single specific task?|General AI|Super AI|Narrow AI|Cognitive AI|2
-
-Which programming language is most commonly used in AI development?|Java|C++|Python|Ruby|2
-
-What is the term for AI systems that learn from data?|Static AI|Rule-Based AI|Machine Learning|Symbolic AI|2
-
-Which AI concept involves training models on labeled data?|Unsupervised Learning|Supervised Learning|Reinforcement Learning|Deep Learning|1
-                                    </pre>
-                            </div>
-                        `;
-                        
-                        modal.appendChild(content);
-                        document.body.appendChild(modal);
-                        
-                        modal.addEventListener('click', function(e) {
-                            if (e.target === modal) modal.remove();
-                        });
-                    }
-
-                    // File upload handling
-                    const fileInput = document.getElementById('question_files');
-                    const fileList = document.getElementById('file-list');
-                    const dropZone = document.querySelector('.file-upload');
-
-                    dropZone.addEventListener('dragover', function(e) {
-                        e.preventDefault();
-                        this.style.borderColor = 'var(--primary-400)';
-                        this.style.backgroundColor = 'var(--primary-50)';
-                    });
-
-                    dropZone.addEventListener('dragleave', function(e) {
-                        e.preventDefault();
-                        this.style.borderColor = 'var(--slate-200)';
-                        this.style.backgroundColor = 'var(--slate-50)';
-                    });
-
-                    dropZone.addEventListener('drop', function(e) {
-                        e.preventDefault();
-                        this.style.borderColor = 'var(--slate-200)';
-                        this.style.backgroundColor = 'var(--slate-50)';
-                        fileInput.files = e.dataTransfer.files;
-                        updateFileList();
-                    });
-
-                    fileInput.addEventListener('change', updateFileList);
-
-                    function updateFileList() {
-                        fileList.innerHTML = '';
-                        Array.from(fileInput.files).forEach(file => {
-                            const fileItem = document.createElement('div');
-                            fileItem.style.cssText = `
-                                display: flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                                padding: 0.5rem;
-                                background: white;
-                                border-radius: 0.25rem;
-                                margin-bottom: 0.5rem;
-                            `;
-                            fileItem.innerHTML = `
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                                    <polyline points="13 2 13 9 20 9"/>
-                                </svg>
-                                <span style="flex-grow: 1;">${file.name}</span>
-                                <span style="color: var(--slate-500); font-size: 0.875rem;">${(file.size/1024).toFixed(1)}KB</span>
-                            `;
-                            fileList.appendChild(fileItem);
-                        });
-                    }
-
-                    // Question validation
-                    function validateQuestions(text, mode) {
-                        let errors = [];
-                        if (text.trim()) {
-                            text.trim().split('\n').forEach((line, idx) => {
-                                if (!line.trim()) return;
-                                const parts = line.split('|');
-                                if (mode === 'mcq') {
-                                    if (parts.length < 3) {
-                                        errors.push(`Q${idx+1}: Must have question, at least 2 options, and correct index.`);
-                                    } else {
-                                        const correctIndex = parseInt(parts[parts.length-1]);
-                                        if (isNaN(correctIndex)) {
-                                            errors.push(`Q${idx+1}: Last part must be a number (correct option index).`);
-                                        } else if (correctIndex < 0 || correctIndex >= parts.length - 1) {
-                                            errors.push(`Q${idx+1}: Correct index (${correctIndex}) is out of range.`);
-                                        }
-                                    }
-                                } else if (!parts[0].trim()) {
-                                    errors.push(`Q${idx+1}: Question text cannot be empty.`);
-                                }
-                            });
-                        }
-                        return errors;
-                    }
-
-                    const textarea = document.getElementById('manual_questions');
-                    const modeSelect = document.getElementById('mode');
-                    const formatError = document.getElementById('format-error');
-                    const promptArea = document.getElementById('prompt');
-                    const promptCounter = document.getElementById('prompt-counter');
-                    const questionCounter = document.getElementById('question-counter');
-
-                    // Character counter for prompt
-                    promptArea.addEventListener('input', function() {
-                        const count = this.value.length;
-                        promptCounter.textContent = `${count}/2000`;
-                        if (count > 2000) {
-                            promptCounter.style.color = 'var(--red-600)';
-                        } else {
-                            promptCounter.style.color = 'var(--slate-500)';
-                        }
-                    });
-
-                    // Real-time validation
-                    let typingTimer;
-                    textarea.addEventListener('input', function() {
-                        clearTimeout(typingTimer);
-                        typingTimer = setTimeout(function() {
-                            const errors = validateQuestions(textarea.value, modeSelect.value);
-                            if (errors.length) {
-                                formatError.innerHTML = errors.join('<br>');
-                                formatError.style.display = 'block';
-                            } else {
-                                formatError.style.display = 'none';
-                            }
-                        }, 500);
-                    });
-
-                    // Mode selector styling
-                    const modeOptions = document.querySelectorAll('.mode-option');
-                    modeOptions.forEach(option => {
-                        const radio = option.querySelector('input[type="radio"]');
-                        const div = option.querySelector('div');
-                        
-                        function updateStyle() {
-                            if (radio.checked) {
-                                div.style.borderColor = 'var(--primary-500)';
-                                div.style.backgroundColor = 'var(--primary-50)';
-                            } else {
-                                div.style.borderColor = 'var(--slate-200)';
-                                div.style.backgroundColor = 'white';
-                            }
-                        }
-                        
-                        radio.addEventListener('change', updateStyle);
-                        updateStyle();
-                    });
-
-                    // Preview functionality
-                    document.getElementById('preview-btn').onclick = function() {
-                        const previewSection = document.getElementById('quiz-preview');
-                        const previewContent = previewSection.querySelector('.preview-content');
-                        
-                        const title = document.getElementById('title').value || 'Untitled Quiz';
-                        const numQ = document.getElementById('num_questions').value;
-                        const timeL = document.getElementById('time_limit').value;
-                        const mode = document.getElementById('mode').value;
-                        const antiCheat = document.getElementById('anti_cheat').checked;
-                        
-                        const badgeStyles = mode === 'mcq' 
-                            ? 'background: var(--primary-100); color: var(--primary-700);' 
-                            : 'background: var(--accent-100); color: var(--accent-700);';
-                        
-                        const previewHTML = `
-                            <div style="display: grid; gap: 1rem;">
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <div style="flex-grow: 1;">
-                                        <h4 style="font-size: 1.25rem; color: var(--slate-900); margin: 0;">${title}</h4>
-                                        <p style="color: var(--slate-500); margin: 0.25rem 0 0 0;">${numQ} questions • ${timeL} minutes</p>
-                                    </div>
-                                    <span class="badge" style="${badgeStyles} padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500;">
-                                        ${mode === 'mcq' ? 'Multiple Choice' : 'Open-ended'}
-                                    </span>
-                                </div>
-                                
-                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                    <div style="background: var(--slate-50); padding: 0.75rem 1rem; border-radius: 0.5rem; min-width: 150px;">
-                                        <div style="font-size: 0.875rem; color: var(--slate-500);">Time Limit</div>
-                                        <div style="font-weight: 500; color: var(--slate-700);">${timeL} minutes</div>
-                                    </div>
-                                    <div style="background: var(--slate-50); padding: 0.75rem 1rem; border-radius: 0.5rem; min-width: 150px;">
-                                        <div style="font-size: 0.875rem; color: var(--slate-500);">Questions</div>
-                                        <div style="font-weight: 500; color: var(--slate-700);">${numQ} questions</div>
-                                    </div>
-                                    <div style="background: var(--slate-50); padding: 0.75rem 1rem; border-radius: 0.5rem; min-width: 150px;">
-                                        <div style="font-size: 0.875rem; color: var(--slate-500);">Security</div>
-                                        <div style="font-weight: 500; color: ${antiCheat ? 'var(--green-600)' : 'var(--slate-700)'};">
-                                            ${antiCheat ? '✓ Enhanced Security' : 'Basic Security'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        
-                        previewContent.innerHTML = previewHTML;
-                        previewSection.style.display = 'block';
-                    };
-
-                    // Validation button
-                    document.getElementById('check-btn').onclick = function() {
-                        const mode = modeSelect.value;
-                        const manualText = textarea.value;
-                        const errors = validateQuestions(manualText, mode);
-                        
-                        const statusDiv = document.getElementById('check-status');
-                        if (errors.length) {
-                            statusDiv.innerHTML = `
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="15" y1="9" x2="9" y2="15"/>
-                                        <line x1="9" y1="9" x2="15" y2="15"/>
-                                    </svg>
-                                    Found ${errors.length} formatting issue${errors.length > 1 ? 's' : ''}:
-                                </div>
-                                <ul style="margin: 0.5rem 0 0 1.5rem;">
-                                    ${errors.map(err => `<li>${err}</li>`).join('')}
-                                </ul>
-                            `;
-                            statusDiv.style.display = 'block';
-                            statusDiv.style.backgroundColor = 'var(--red-50)';
-                            statusDiv.style.color = 'var(--red-700)';
-                            statusDiv.style.border = '1px solid var(--red-200)';
-                        } else if (manualText.trim()) {
-                            statusDiv.innerHTML = `
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M20 6L9 17l-5-5"/>
-                                    </svg>
-                                    All questions are properly formatted!
-                                </div>
-                            `;
-                            statusDiv.style.display = 'block';
-                            statusDiv.style.backgroundColor = 'var(--green-50)';
-                            statusDiv.style.color = 'var(--green-700)';
-                            statusDiv.style.border = '1px solid var(--green-200)';
-                        } else {
-                            statusDiv.innerHTML = `
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="12" y1="16" x2="12" y2="12"/>
-                                        <line x1="12" y1="8" x2="12.01" y2="8"/>
-                                    </svg>
-                                    No questions to validate. Add some questions first.
-                                </div>
-                            `;
-                            statusDiv.style.display = 'block';
-                            statusDiv.style.backgroundColor = 'var(--primary-50)';
-                            statusDiv.style.color = 'var(--primary-700)';
-                            statusDiv.style.border = '1px solid var(--primary-200)';
-                        }
-                    };
-                });
-                </script>
-            </form>
-        </div>
-    </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
-</html>
-
-
-                                <path d="M12 5l7 7-7 7"/>
-
-                            </svg>
-
-                            Continue to Questions
-
-                        </button>
-
-                    </div>
-
-                </div>
-
+                <div id="check-status" class="status-message" style="display: none;"></div>
                 
-
-                <div id="check-status" class="status-message" style="display: none; margin-top: 1rem; padding: 1rem; border-radius: 0.5rem;"></div>
-
                 <script>
-
                 // Function to toggle all anti-cheating features
-
                 function toggleAllFeatures(checked) {
-
                     document.querySelectorAll('.anti-cheat-feature').forEach(checkbox => {
-
                         checkbox.checked = checked;
-
                     });
-
                 }
-
-
 
                 // Function to update master checkbox based on individual selections
-
                 function updateMasterCheckbox() {
-
                     const features = document.querySelectorAll('.anti-cheat-feature');
-
                     const masterCheckbox = document.getElementById('anti_cheat_master');
-
                     const allChecked = Array.from(features).every(checkbox => checkbox.checked);
-
                     masterCheckbox.checked = allChecked;
-
                 }
 
-
-
                 document.addEventListener('DOMContentLoaded', function() {
+                    // Generation mode toggle
+                    const radioAI = document.getElementById('gen_mode_ai');
+                    const radioManual = document.getElementById('gen_mode_manual');
+                    const panelAI = document.getElementById('ai-tab');
+                    const panelManual = document.getElementById('manual-tab');
 
-                    // Generation mode handling
-
-                    const aiCheck = document.getElementById('use_ai_generation');
-
-                    const manualCheck = document.getElementById('use_manual_entry');
-
-                    const aiTab = document.querySelector('.tab-btn[onclick*="ai"]');
-
-                    const manualTab = document.querySelector('.tab-btn[onclick*="manual"]');
-
-
-
-                    function updateTabs() {
-
-                        const aiEnabled = aiCheck.checked;
-
-                        const manualEnabled = manualCheck.checked;
-
-
-
-                        // Ensure at least one option is selected
-
-                        if (!aiEnabled && !manualEnabled) {
-
-                            this.checked = true;
-
-                            return;
-
+                    function toggleGenerationMode() {
+                        if (radioAI.checked) {
+                            panelAI.style.display = 'block';
+                            panelManual.style.display = 'none';
+                        } else {
+                            panelAI.style.display = 'none';
+                            panelManual.style.display = 'block';
                         }
-
-
-
-                        // Update tab visibility and state
-
-                        aiTab.style.display = aiEnabled ? 'block' : 'none';
-
-                        manualTab.style.display = manualEnabled ? 'block' : 'none';
-
-
-
-                        // If current tab is disabled, switch to the enabled tab
-
-                        const currentTab = document.querySelector('.tab-btn.active');
-
-                        if ((currentTab === aiTab && !aiEnabled) || 
-
-                            (currentTab === manualTab && !manualEnabled)) {
-
-                            if (aiEnabled) switchTab('ai');
-
-                            else if (manualEnabled) switchTab('manual');
-
-                        }
-
-
-
-                        // Hide tabs container if only one option is enabled
-
-                        const tabsContainer = document.querySelector('.tabs > div');
-
-                        tabsContainer.style.display = (aiEnabled && manualEnabled) ? 'flex' : 'none';
-
                     }
 
-
-
-                    aiCheck.addEventListener('change', updateTabs);
-
-                    manualCheck.addEventListener('change', updateTabs);
-
-                    updateTabs();  // Initial state
-
-
+                    radioAI.addEventListener('change', toggleGenerationMode);
+                    radioManual.addEventListener('change', toggleGenerationMode);
+                    toggleGenerationMode();
 
                     // Set up event listeners for individual checkboxes
-
                     document.querySelectorAll('.anti-cheat-feature').forEach(checkbox => {
-
                         checkbox.addEventListener('change', updateMasterCheckbox);
-
                     });
 
-
-
                     // Make toggleAllFeatures available globally
-
                     window.toggleAllFeatures = toggleAllFeatures;
 
+                    // Mode selector functionality
+                    window.updateModeSelection = function(element, mode) {
+                        const radio = element.querySelector('input[type="radio"]');
+                        radio.checked = true;
 
-
-                    // Tab switching functionality
-
-                    window.switchTab = function(tabName) {
-
-                        document.querySelectorAll('.tab-btn').forEach(btn => {
-
-                            btn.classList.remove('active');
-
-                            btn.style.color = 'var(--slate-600)';
-
-                            btn.style.borderBottom = 'none';
-
+                        document.querySelectorAll('.mode-option').forEach(option => {
+                            const box = option.querySelector('.mode-box');
+                            const icon = option.querySelector('.mode-icon');
+                            const isSelected = option.querySelector('input[type="radio"]').checked;
+                            
+                            box.style.borderColor = isSelected ? 'var(--primary-500)' : 'var(--slate-200)';
+                            box.style.background = isSelected ? 'linear-gradient(135deg, var(--primary-50), var(--accent-50))' : 'white';
+                            icon.style.color = isSelected ? 'var(--primary-600)' : 'var(--slate-500)';
                         });
 
-                        
-
-                        document.querySelectorAll('.tab-content').forEach(content => {
-
-                            content.style.display = 'none';
-
-                        });
-
-                        
-
-                        const activeBtn = document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
-
-                        activeBtn.classList.add('active');
-
-                        activeBtn.style.color = 'var(--primary-600)';
-
-                        activeBtn.style.borderBottom = '2px solid var(--primary-500)';
-
-                        
-
-                        document.getElementById(`${tabName}-tab`).style.display = 'block';
-
+                        const event = new Event('change');
+                        radio.dispatchEvent(event);
                     }
 
-
+                    // Set initial mode state
+                    const checkedOption = document.querySelector('.mode-option input:checked');
+                    if (checkedOption) {
+                        updateModeSelection(checkedOption.closest('.mode-option'), checkedOption.value);
+                    }
 
                     // Example modal functionality
-
                     window.showExamples = function() {
-
                         const modal = document.createElement('div');
-
                         modal.style.cssText = `
-
                             position: fixed;
-
                             top: 0;
-
                             left: 0;
-
                             right: 0;
-
                             bottom: 0;
-
                             background: rgba(0,0,0,0.5);
-
                             display: flex;
-
                             align-items: center;
-
                             justify-content: center;
-
                             z-index: 1000;
-
                         `;
-
                         
-
                         const content = document.createElement('div');
-
                         content.style.cssText = `
-
                             background: white;
-
                             padding: 2rem;
-
-                            border-radius: 0.75rem;
-
+                            border-radius: 1rem;
                             max-width: 600px;
-
                             width: 90%;
-
                             max-height: 80vh;
-
                             overflow-y: auto;
-
                             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-
                         `;
-
                         
-
                         content.innerHTML = `
-
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-
                                 <h3 style="font-size: 1.25rem; color: var(--slate-800);">Example Questions</h3>
-
-                                <button onclick="this.closest('div[style*=fixed]').remove()" style="background: none; border: none; cursor: pointer;">
-
+                                <button onclick="this.closest('div[style*=fixed]').remove()" style="background: none; border: none; cursor: pointer; padding: 0.5rem;">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
                                         <line x1="18" y1="6" x2="6" y2="18"/>
-
                                         <line x1="6" y1="6" x2="18" y2="18"/>
-
                                     </svg>
-
                                 </button>
-
                             </div>
-
                             <div style="border-bottom: 1px solid var(--slate-200); margin-bottom: 1.5rem;">
-
-                                <h4 style="color: var(--primary-600);">MCQ Examples:</h4>
-
-                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0 1.5rem 0;">What is the capital of France?|London|Paris|Berlin|1
-
+                                <h4 style="color: var(--primary-600); margin-bottom: 0.75rem;">MCQ Examples:</h4>
+                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0 1.5rem 0; font-size: 0.875rem;">What is the capital of France?|London|Paris|Berlin|1
 Which planet is known as the Red Planet?|Venus|Mars|Jupiter|1
-
 What is 2+2?|3|4|5|1
-
 Who wrote Romeo and Juliet?|Charles Dickens|William Shakespeare|Jane Austen|1
-
 What is the chemical symbol for water?|CO2|H2O|O2|1</pre>
-
                             </div>
-
                             <div>
-
-                                <h4 style="color: var(--primary-600);">Viva Examples:</h4>
-
-                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0;">Explain the process of photosynthesis in detail.
+                                <h4 style="color: var(--primary-600); margin-bottom: 0.75rem;">Viva Examples:</h4>
+                                <pre style="background: var(--slate-50); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; font-size: 0.875rem;">Explain the process of photosynthesis in detail.
 
 Describe the causes and effects of climate change.
 
@@ -1096,515 +968,238 @@ What are the main principles of object-oriented programming?
 Discuss the impact of social media on modern society.
 
 Compare and contrast renewable and non-renewable energy sources.</pre>
-
                             </div>
-
                         `;
-
                         
-
                         modal.appendChild(content);
-
                         document.body.appendChild(modal);
-
                         
-
                         modal.addEventListener('click', function(e) {
-
                             if (e.target === modal) modal.remove();
-
                         });
-
                     }
 
-
-
                     // File upload handling
-
                     const fileInput = document.getElementById('question_files');
-
                     const fileList = document.getElementById('file-list');
+                    const dropZone = document.querySelector('.file-upload-zone');
 
-                    const dropZone = document.querySelector('.file-upload');
-
-
-
+                    dropZone.addEventListener('click', () => fileInput.click());
+                    
                     dropZone.addEventListener('dragover', function(e) {
-
                         e.preventDefault();
-
-                        this.style.borderColor = 'var(--primary-400)';
-
-                        this.style.backgroundColor = 'var(--primary-50)';
-
+                        this.classList.add('dragover');
                     });
-
-
 
                     dropZone.addEventListener('dragleave', function(e) {
-
                         e.preventDefault();
-
-                        this.style.borderColor = 'var(--slate-200)';
-
-                        this.style.backgroundColor = 'var(--slate-50)';
-
+                        this.classList.remove('dragover');
                     });
-
-
 
                     dropZone.addEventListener('drop', function(e) {
-
                         e.preventDefault();
-
-                        this.style.borderColor = 'var(--slate-200)';
-
-                        this.style.backgroundColor = 'var(--slate-50)';
-
+                        this.classList.remove('dragover');
                         fileInput.files = e.dataTransfer.files;
-
                         updateFileList();
-
                     });
-
-
 
                     fileInput.addEventListener('change', updateFileList);
 
-
-
                     function updateFileList() {
-
                         fileList.innerHTML = '';
-
                         Array.from(fileInput.files).forEach(file => {
-
                             const fileItem = document.createElement('div');
-
                             fileItem.style.cssText = `
-
                                 display: flex;
-
                                 align-items: center;
-
-                                gap: 0.5rem;
-
-                                padding: 0.5rem;
-
+                                gap: 0.75rem;
+                                padding: 0.75rem;
                                 background: white;
-
-                                border-radius: 0.25rem;
-
+                                border-radius: 0.5rem;
                                 margin-bottom: 0.5rem;
-
+                                border: 1px solid var(--slate-200);
                             `;
-
                             fileItem.innerHTML = `
-
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);">
                                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-
                                     <polyline points="13 2 13 9 20 9"/>
-
                                 </svg>
-
-                                <span style="flex-grow: 1;">${file.name}</span>
-
+                                <span style="flex-grow: 1; font-weight: 500; color: var(--slate-700);">${file.name}</span>
                                 <span style="color: var(--slate-500); font-size: 0.875rem;">${(file.size/1024).toFixed(1)}KB</span>
-
                             `;
-
                             fileList.appendChild(fileItem);
-
                         });
-
                     }
-
-
 
                     // Question validation
-
                     function validateQuestions(text, mode) {
-
                         let errors = [];
-
                         if (text.trim()) {
-
                             text.trim().split('\n').forEach((line, idx) => {
-
                                 if (!line.trim()) return;
-
                                 const parts = line.split('|');
-
                                 if (mode === 'mcq') {
-
                                     if (parts.length < 3) {
-
                                         errors.push(`Q${idx+1}: Must have question, at least 2 options, and correct index.`);
-
                                     } else {
-
                                         const correctIndex = parseInt(parts[parts.length-1]);
-
                                         if (isNaN(correctIndex)) {
-
                                             errors.push(`Q${idx+1}: Last part must be a number (correct option index).`);
-
                                         } else if (correctIndex < 0 || correctIndex >= parts.length - 1) {
-
                                             errors.push(`Q${idx+1}: Correct index (${correctIndex}) is out of range.`);
-
                                         }
-
                                     }
-
                                 } else if (!parts[0].trim()) {
-
                                     errors.push(`Q${idx+1}: Question text cannot be empty.`);
-
                                 }
-
                             });
-
                         }
-
                         return errors;
-
                     }
 
-
-
                     const textarea = document.getElementById('manual_questions');
-
-                    const modeSelect = document.getElementById('mode');
-
+                    const modeSelect = document.querySelector('input[name="mode"]:checked');
                     const formatError = document.getElementById('format-error');
-
                     const promptArea = document.getElementById('prompt');
-
                     const promptCounter = document.getElementById('prompt-counter');
 
-                    const questionCounter = document.getElementById('question-counter');
-
-
-
                     // Character counter for prompt
-
                     promptArea.addEventListener('input', function() {
-
                         const count = this.value.length;
-
                         promptCounter.textContent = `${count}/2000`;
-
                         if (count > 2000) {
-
                             promptCounter.style.color = 'var(--red-600)';
-
                         } else {
-
                             promptCounter.style.color = 'var(--slate-500)';
-
                         }
-
                     });
-
-
 
                     // Real-time validation
-
                     let typingTimer;
-
                     textarea.addEventListener('input', function() {
-
                         clearTimeout(typingTimer);
-
                         typingTimer = setTimeout(function() {
-
-                            const errors = validateQuestions(textarea.value, modeSelect.value);
-
+                            const mode = document.querySelector('input[name="mode"]:checked')?.value || 'mcq';
+                            const errors = validateQuestions(textarea.value, mode);
                             if (errors.length) {
-
                                 formatError.innerHTML = errors.join('<br>');
-
                                 formatError.style.display = 'block';
-
                             } else {
-
                                 formatError.style.display = 'none';
-
                             }
-
                         }, 500);
-
                     });
-
-
-
-                    // Mode selector styling
-
-                    const modeOptions = document.querySelectorAll('.mode-option');
-
-                    modeOptions.forEach(option => {
-
-                        const radio = option.querySelector('input[type="radio"]');
-
-                        const div = option.querySelector('div');
-
-                        
-
-                        function updateStyle() {
-
-                            if (radio.checked) {
-
-                                div.style.borderColor = 'var(--primary-500)';
-
-                                div.style.backgroundColor = 'var(--primary-50)';
-
-                            } else {
-
-                                div.style.borderColor = 'var(--slate-200)';
-
-                                div.style.backgroundColor = 'white';
-
-                            }
-
-                        }
-
-                        
-
-                        radio.addEventListener('change', updateStyle);
-
-                        updateStyle();
-
-                    });
-
-
 
                     // Preview functionality
-
                     document.getElementById('preview-btn').onclick = function() {
-
                         const previewSection = document.getElementById('quiz-preview');
-
                         const previewContent = previewSection.querySelector('.preview-content');
-
                         
-
                         const title = document.getElementById('title').value || 'Untitled Quiz';
-
                         const numQ = document.getElementById('num_questions').value;
-
                         const timeL = document.getElementById('time_limit').value;
-
-                        const mode = document.getElementById('mode').value;
-
-                        const antiCheat = document.getElementById('anti_cheat').checked;
-
+                        const mode = document.querySelector('input[name="mode"]:checked')?.value || 'mcq';
+                        const antiCheat = document.getElementById('anti_cheat_master').checked;
                         
-
                         const badgeStyles = mode === 'mcq' 
-
                             ? 'background: var(--primary-100); color: var(--primary-700);' 
-
-                            : 'background: var(--accent-100); color: var(--accent-700);';
-
+                            : 'background: var(--accent-100); color: var(--accent-600);';
                         
-
                         const previewHTML = `
-
-                            <div style="display: grid; gap: 1rem;">
-
+                            <div style="display: grid; gap: 1.5rem;">
                                 <div style="display: flex; align-items: center; gap: 1rem;">
-
                                     <div style="flex-grow: 1;">
-
                                         <h4 style="font-size: 1.25rem; color: var(--slate-900); margin: 0;">${title}</h4>
-
                                         <p style="color: var(--slate-500); margin: 0.25rem 0 0 0;">${numQ} questions • ${timeL} minutes</p>
-
                                     </div>
-
-                                    <span class="badge" style="${badgeStyles} padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500;">
-
+                                    <span class="badge" style="${badgeStyles} padding: 0.375rem 0.875rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500;">
                                         ${mode === 'mcq' ? 'Multiple Choice' : 'Open-ended'}
-
                                     </span>
-
                                 </div>
-
                                 
-
                                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-
-                                    <div style="background: var(--slate-50); padding: 0.75rem 1rem; border-radius: 0.5rem; min-width: 150px;">
-
+                                    <div style="background: white; padding: 1rem; border-radius: 0.75rem; min-width: 150px; border: 1px solid var(--slate-200);">
                                         <div style="font-size: 0.875rem; color: var(--slate-500);">Time Limit</div>
-
-                                        <div style="font-weight: 500; color: var(--slate-700);">${timeL} minutes</div>
-
+                                        <div style="font-weight: 600; color: var(--slate-700); font-size: 1.125rem;">${timeL} minutes</div>
                                     </div>
-
-                                    <div style="background: var(--slate-50); padding: 0.75rem 1rem; border-radius: 0.5rem; min-width: 150px;">
-
+                                    <div style="background: white; padding: 1rem; border-radius: 0.75rem; min-width: 150px; border: 1px solid var(--slate-200);">
                                         <div style="font-size: 0.875rem; color: var(--slate-500);">Questions</div>
-
-                                        <div style="font-weight: 500; color: var(--slate-700);">${numQ} questions</div>
-
+                                        <div style="font-weight: 600; color: var(--slate-700); font-size: 1.125rem;">${numQ} questions</div>
                                     </div>
-
-                                    <div style="background: var(--slate-50); padding: 0.75rem 1rem; border-radius: 0.5rem; min-width: 150px;">
-
+                                    <div style="background: white; padding: 1rem; border-radius: 0.75rem; min-width: 150px; border: 1px solid var(--slate-200);">
                                         <div style="font-size: 0.875rem; color: var(--slate-500);">Security</div>
-
-                                        <div style="font-weight: 500; color: ${antiCheat ? 'var(--green-600)' : 'var(--slate-700)'};">
-
-                                            ${antiCheat ? '✓ Enhanced Security' : 'Basic Security'}
-
+                                        <div style="font-weight: 600; color: ${antiCheat ? 'var(--green-600)' : 'var(--slate-700)'}; font-size: 1.125rem;">
+                                            ${antiCheat ? '✓ Enhanced' : 'Basic'}
                                         </div>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                         `;
-
                         
-
                         previewContent.innerHTML = previewHTML;
-
                         previewSection.style.display = 'block';
-
                     };
-
-
 
                     // Validation button
-
                     document.getElementById('check-btn').onclick = function() {
-
-                        const mode = modeSelect.value;
-
+                        const mode = document.querySelector('input[name="mode"]:checked')?.value || 'mcq';
                         const manualText = textarea.value;
-
                         const errors = validateQuestions(manualText, mode);
-
                         
-
                         const statusDiv = document.getElementById('check-status');
-
                         if (errors.length) {
-
                             statusDiv.innerHTML = `
-
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
                                         <circle cx="12" cy="12" r="10"/>
-
                                         <line x1="15" y1="9" x2="9" y2="15"/>
-
                                         <line x1="9" y1="9" x2="15" y2="15"/>
-
                                     </svg>
-
                                     Found ${errors.length} formatting issue${errors.length > 1 ? 's' : ''}:
-
                                 </div>
-
                                 <ul style="margin: 0.5rem 0 0 1.5rem;">
-
                                     ${errors.map(err => `<li>${err}</li>`).join('')}
-
                                 </ul>
-
                             `;
-
                             statusDiv.style.display = 'block';
-
                             statusDiv.style.backgroundColor = 'var(--red-50)';
-
                             statusDiv.style.color = 'var(--red-700)';
-
                             statusDiv.style.border = '1px solid var(--red-200)';
-
                         } else if (manualText.trim()) {
-
                             statusDiv.innerHTML = `
-
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
                                         <path d="M20 6L9 17l-5-5"/>
-
                                     </svg>
-
                                     All questions are properly formatted!
-
                                 </div>
-
                             `;
-
                             statusDiv.style.display = 'block';
-
                             statusDiv.style.backgroundColor = 'var(--green-50)';
-
                             statusDiv.style.color = 'var(--green-700)';
-
                             statusDiv.style.border = '1px solid var(--green-200)';
-
                         } else {
-
                             statusDiv.innerHTML = `
-
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
                                         <circle cx="12" cy="12" r="10"/>
-
                                         <line x1="12" y1="16" x2="12" y2="12"/>
-
                                         <line x1="12" y1="8" x2="12.01" y2="8"/>
-
                                     </svg>
-
                                     No questions to validate. Add some questions first.
-
                                 </div>
-
                             `;
-
                             statusDiv.style.display = 'block';
-
                             statusDiv.style.backgroundColor = 'var(--primary-50)';
-
                             statusDiv.style.color = 'var(--primary-700)';
-
                             statusDiv.style.border = '1px solid var(--primary-200)';
-
                         }
-
                     };
-
                 });
-
                 </script>
-
             </form>
-
         </div>
-
     </div>
-
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-
 </body>
-
 </html>
-
-
