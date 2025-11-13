@@ -1985,6 +1985,7 @@ html {
     padding: 4rem 2rem 2rem;
 }
 
+<<<<<<< HEAD
 /* Dashboard: center and enlarge total/stat values across templates */
 .stat-cards .card,
 .stats-grid .stat-card,
@@ -2052,6 +2053,8 @@ html {
 }
 #enter-fullscreen-btn:hover { transform: translateY(-2px); }
 
+=======
+>>>>>>> 9b85e4dbc0bbcb968354dbc8e08607ce9fe719c0
 .footer-content {
     max-width: 1200px;
     margin: 0 auto;
