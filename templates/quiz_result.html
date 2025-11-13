@@ -107,9 +107,16 @@
                 </div>
                 <ul class="list-group list-group-flush">
                     {% for option in item.options %}
+
+                        {# 💥 FIX 1: Safely check if the index matches the student's answer. 
+                           The 'or -1' prevents 'None' from being converted to 0 by |int #}
+                        {% set student_choice_index = item.student_answer if item.student_answer is not none else -1 %}
+                        {% set correct_choice_index = item.correct_answer if item.correct_answer is not none else -2 %}
+
+
                         {# CORRECTED LOGIC: Use the loop index to compare against the stored answer indices #}
-                        {% set is_student_choice = (loop.index0 == item.student_answer|int) %}
-                        {% set is_correct_choice = (loop.index0 == item.correct_answer|int) %}
+                        {% set is_student_choice = (loop.index0 == student_choice_index) %}
+                        {% set is_correct_choice = (loop.index0 == correct_choice_index) %}
                         
                         <li class="list-group-item 
                             {% if is_student_choice and not item.is_correct %}incorrect-answer{% endif %}

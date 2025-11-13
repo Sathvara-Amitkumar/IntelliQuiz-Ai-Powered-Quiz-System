@@ -13,13 +13,14 @@ import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
+import io
 
 import google.generativeai as genai
 
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import request, jsonify, send_file
+from flask import request, jsonify, send_file, Response
 import google.oauth2.id_token
 import google.auth.transport.requests
 
@@ -245,6 +246,33 @@ def index():
             return redirect(url_for("admin.dashboard"))
     return render_template('index.html')
 
+@bp_main.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        message = request.form.get('message')
+        
+        if not name or not email or not message:
+            flash('Please fill in all fields.', 'error')
+            return redirect(url_for('main.index') + '#contact')
+        
+        db = get_db()
+        try:
+            db.execute(
+                'INSERT INTO contact (name, email, message) VALUES (?, ?, ?)',
+                (name, email, message)
+            )
+            db.commit()
+            flash('Thank you for your message! We will get back to you soon.', 'success')
+            return redirect(url_for('main.index') + '#contact')
+        except sqlite3.Error as e:
+            db.rollback()
+            flash('An error occurred while sending your message. Please try again.', 'error')
+            return redirect(url_for('main.index') + '#contact')
+    
+    return redirect(url_for('main.index') + '#contact')
+
 # -------------------------------------------------------------------------
 
 # --- Authentication Routes ---
@@ -360,7 +388,7 @@ def signup(role):
             flash(f"User '{username}' is already registered.", 'error')
     return render_template('signup.html', role=role)
 
-@bp_auth.route('/logout')
+@bp_auth.route('/logout', methods=['GET', 'POST'])
 def logout():
     if 'user_id' in session:
         # Clear stored credentials
@@ -542,28 +570,30 @@ def generate_questions_with_gemini(topic, num_questions, is_viva):
         question_type = "short answer viva questions" if is_viva else "multiple choice questions (MCQ)"
         
         prompt = f"""
-        Generate exactly {num_questions} {question_type} about: {topic}
-        
-        Requirements:
-        - Return ONLY valid JSON array
-        - For MCQ: Each object should have: "question", "options" (array of 4 strings), "answer" (correct option string)
-        - For Viva: Each object should have: "question", "answer" (suggested answer)
-        - Make questions educational and relevant to the topic
-        - Ensure answers are accurate
-        
-        Example MCQ format:
-        [{{"question": "What is Python?", "options": ["A snake", "Programming language", "A bird", "A car"], "answer": "Programming language"}}]
-        
-        Example Viva format:
-        [{{"question": "Explain Python programming", "answer": "Python is a high-level programming language..."}}]
+            Generate exactly {num_questions} {question_type} about: {topic}
+
+            Requirements:
+            - Return ONLY valid JSON array
+            - Keep questions and answers short and clear
+            - For MCQ: Each object should have: 
+            "question" (max 15 words), 
+            "options" (array of 4 short strings), 
+            "answer" (correct option string)
+            - For Viva: Each object should have: 
+            "question" (max 15 words), 
+            "answer" (concise and accurate, max 25 words)
+            - Make questions educational and relevant to the topic
+            - Ensure answers are accurate
+
+            Example MCQ format:
+            [{{"question": "What is Python?", "options": ["A snake", "Programming language", "A bird", "A car"], "answer": "Programming language"}}]
+
+            Example Viva format:
+            [{{"question": "Explain Python programming", "answer": "Python is a high-level programming language used for web, data, and automation."}}]
         """
         
-        print("🚀 [DEBUG] Sending prompt to Gemini:")
-        print(prompt)
 
         response = model.generate_content(prompt)
-        print("🧩 [DEBUG] Raw Gemini response:")
-        print(response.text)
         
         json_text = response.text.strip()
         
@@ -582,9 +612,30 @@ def generate_questions_with_gemini(topic, num_questions, is_viva):
         return questions
 
     except Exception as e:
-        print(f"Gemini API Error: {e}")
         return {"error": f"Failed to generate questions: {str(e)}"}
-    
+
+import PyPDF2  # PDF padhne ke liye
+import docx    # Word doc padhne ke liye
+import os      # File save/delete karne ke liye
+
+# Yeh function file se text nikaalega
+def extract_text_from_file(file_path, file_extension):
+    text = ""
+    try:
+        if file_extension == ".pdf":
+            with open(file_path, 'rb') as f:
+                reader = PyPDF2.PdfReader(f)
+                for page in reader.pages:
+                    text += page.extract_text()
+        elif file_extension == ".docx":
+            doc = docx.Document(file_path)
+            for para in doc.paragraphs:
+                text += para.text + "\n"
+        # Aap .txt, .pptx etc. ke liye bhi support add kar sakte hain
+    except Exception as e:
+        print(f"Error extracting text: {e}")
+    return text
+
 @bp_teacher.route('/preview', methods=['POST'])
 @login_required
 def preview_generated_questions():
@@ -619,8 +670,37 @@ def preview_generated_questions():
     topic_prompt = form_data.get('topic') # Using 'topic' as per our last fix
     num_questions = int(form_data.get('num_questions', 5))
     
+    uploaded_file = request.files.get('question_files')
+    file_text = ""
+
+    if uploaded_file and uploaded_file.filename != '':
+            try:
+                # File extension check
+                filename = uploaded_file.filename
+                file_ext = os.path.splitext(filename)[1].lower()
+                
+                if file_ext not in ['.pdf', '.docx', '.txt']:
+                    flash('Invalid file type. Please upload PDF, DOCX, or TXT.', 'error')
+                    return redirect(url_for('teacher.create_quiz'))
+
+                # File ko temporarily save karein
+                temp_file_path = os.path.join('uploads', filename) # 'uploads' folder banana padega
+                uploaded_file.save(temp_file_path)
+                
+                # File se text nikaalein
+                file_text = extract_text_from_file(temp_file_path, file_ext)
+                
+                # Temp file delete kardein
+                os.remove(temp_file_path)
+
+            except Exception as e:
+                flash(f'Error processing file: {e}', 'error')
+                return redirect(url_for('teacher.create_quiz'))
+            
+    final_prompt = topic_prompt + "\n\n" + file_text
+    
     generated_questions = generate_questions_with_gemini(
-        topic_prompt, num_questions, quiz_details['viva']
+        final_prompt, num_questions, quiz_details['viva']
     )
     
     # 🔹 Transform for HTML rendering
@@ -661,77 +741,96 @@ def save_quiz():
         return redirect(url_for('main.index'))
 
     # Retrieve all data from the session
-    quiz_details = session.get('quiz_details')
-    generated_questions = session.get('generated_questions')
-    suspicious_flags = session.get('suspicious_flags') # Get the new flags
+    form_data = request.form
     teacher_id = session.get('user_id')
-
-    if not all([quiz_details, generated_questions, suspicious_flags]):
-        flash('Session expired or data is incomplete. Please create the quiz again.', 'danger')
+    
+    # Retrieve necessary details from the form/session
+    quiz_details = session.get('quiz_details', {}) # Fallback to empty dict
+    suspicious_flags = session.get('suspicious_flags', {})
+    
+    # Get details from form (these are the finalized values)
+    title = form_data.get('title')
+    time_limit = form_data.get('time_limit')
+    is_viva = form_data.get('mode') == 'viva'
+    
+    if not title or not time_limit:
+        flash('Quiz title or time limit is missing.', 'danger')
         return redirect(url_for('teacher.create_quiz'))
 
     db = get_db()
     try:
-        # --- NEW: Convert the suspicious flags dictionary to a JSON string ---
+        # Convert the suspicious flags dictionary to a JSON string
         anti_cheating_json = json.dumps(suspicious_flags)
 
+        # Generate unique room code
         while True:
             room_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
             if not db.execute('SELECT id FROM quizzes WHERE room_code = ?', (room_code,)).fetchone():
                 break
 
-        # Step 1: Insert the quiz with the new anti_cheating_features
+        # Step 2: Insert the quiz
         cursor = db.execute(
             'INSERT INTO quizzes (teacher_id, title, description, time_limit, is_viva, room_code, anti_cheating_features) VALUES (?, ?, ?, ?, ?, ?, ?)',
             (
                 teacher_id,
-                quiz_details['title'],
-                quiz_details['description'],
-                quiz_details['time_limit'],
-                1 if quiz_details.get('viva') else 0,
+                title,
+                quiz_details.get('description', ''), # Use description from session if needed
+                time_limit,
+                1 if is_viva else 0,
                 room_code,
-                anti_cheating_json # Save the JSON string to the database
+                anti_cheating_json
             )
         )
         quiz_id = cursor.lastrowid
 
-        # Step 2: Save the questions (this part remains the same)
-        for question_data in generated_questions:
-            options = question_data.get('options', [])  # List of options
-            answer_value = question_data.get('answer')  # String answer OR index
-
-            # ✅ Ensure correct_answer is ALWAYS an index
-            correct_index = 0
+        # Step 3: Iterate through the questions submitted in the form
+        qidx = 0
+        while True:
+            question_text = form_data.get(f'question_text_{qidx}')
+            
+            # Stop if we run out of questions
+            if not question_text:
+                break
+                
+            # Read Options and Correct Answer Index
+            options = []
+            opt_idx = 0
+            while True:
+                option_text = form_data.get(f'option_{qidx}_{opt_idx}')
+                if not option_text:
+                    break
+                options.append(option_text)
+                opt_idx += 1
+                
+            correct_index_str = form_data.get(f'correct_{qidx}')
+            
+            # Sanitize correct_index and ensure it is an integer
             try:
-                if isinstance(answer_value, int) or str(answer_value).isdigit():
-                    correct_index = int(answer_value)
-                else:
-                    correct_index = options.index(answer_value)
-            except:
-                correct_index = 0  # Fallback if mismatch
-
+                correct_index = int(correct_index_str) if correct_index_str else 0
+            except (ValueError, TypeError):
+                correct_index = 0
+            
+            # Save Question to DB
             db.execute(
                 'INSERT INTO questions (quiz_id, question_text, options, correct_answer) VALUES (?, ?, ?, ?)',
                 (
                     quiz_id,
-                    question_data.get('question', ''),
+                    question_text,
                     json.dumps(options),
                     correct_index
                 )
             )
-        # for question_data in generated_questions:
-        #     db.execute(
-        #         'INSERT INTO questions (quiz_id, question_text, options, correct_answer) VALUES (?, ?, ?, ?)',
-        #         (quiz_id, question_data['question'], json.dumps(question_data.get('options', [])), question_data['answer'])
-        #     )
-        
+            
+            qidx += 1
 
         db.commit()
 
-        # Step 3: Clear all temporary session data
+        # Step 4: Clear all temporary session data
         session.pop('quiz_details', None)
         session.pop('generated_questions', None)
         session.pop('suspicious_flags', None)
+
+        
 
         flash('Quiz and questions have been successfully saved!', 'success')
         return redirect(url_for('teacher.dashboard'))
@@ -742,406 +841,7 @@ def save_quiz():
         return redirect(url_for('teacher.create_quiz'))
 
 
-# @bp_teacher.route('/save_quiz', methods=['POST'])
-# @teacher_or_admin_required
-# def save_quiz():
-#     # Session से data retrieve करें
-#     quiz_details = session.get('quiz_details', {})
-#     generated_questions = session.get('generated_questions', [])
-#     suspicious_flags = session.get('suspicious_flags', {})
-    
-#     if not quiz_details or not generated_questions:
-#         flash('Session expired. Please create quiz again.', 'error')
-#         return redirect(url_for('teacher.create_quiz'))
-    
-#     db = get_db()
-#     try:
-#         # Unique room code generate करें
-#         while True:
-#             room_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-#             if not db.execute('SELECT id FROM quizzes WHERE room_code = ?', (room_code,)).fetchone():
-#                 break
-        
-#         # Quiz database में save करें
-#         cursor = db.execute(
-#             'INSERT INTO quizzes (teacher_id, title, time_limit, room_code, anti_cheating_features) VALUES (?, ?, ?, ?, ?)',
-#             (session['user_id'], quiz_details.get('title'), quiz_details.get('time_limit'), room_code, json.dumps(suspicious_flags))
-#         )
-#         quiz_id = cursor.lastrowid
-        
-#         # Questions save करें
-#         for q in generated_questions:
-#             options_json = json.dumps(q.get('options', []))
-#             correct_answer = q.get('answer', '')
-            
-#             db.execute(
-#                 'INSERT INTO questions (quiz_id, question_text, options, correct_answer) VALUES (?, ?, ?, ?)',
-#                 (quiz_id, q['question'], options_json, correct_answer)
-#             )
-        
-#         db.commit()
-        
-#         # Session clear करें
-#         session.pop('quiz_details', None)
-#         session.pop('generated_questions', None)
-#         session.pop('suspicious_flags', None)
-        
-#         flash(f'Quiz "{quiz_details.get("title")}" successfully created! Room Code: {room_code}', 'success')
-#         return redirect(url_for('teacher.dashboard'))
-        
-#     except Exception as e:
-#         db.rollback()
-#         flash(f'Error saving quiz: {str(e)}', 'error')
-#         return redirect(url_for('teacher.create_quiz'))
-
-
-
-# --- Teacher: Preview Generated Questions (POST) ---   change with GEMINI
-# @bp_teacher.route('/preview', methods=['POST'])
-# @teacher_or_admin_required
-# def preview_generated_questions():
-#     data = request.form
-#     print(f"[DEBUG] Form data received: {dict(data)}")  # DEBUG LINE
-    
-#     data = request.form
-#     if not data:
-#         return render_template('generated_questions.html',
-#                             questions=[],
-#                             error="No form data provided",
-#                             saved_files=[],
-#                             viva=False)
-
-#     viva_mode = data.get('mode', 'mcq') == 'viva'
-    
-#     try:
-#         num_questions = int(data.get('num_questions', 5))
-#         if num_questions <= 0 or num_questions > 50:
-#             return render_template('generated_questions.html',
-#                                 questions=[],
-#                                 error="Number of questions must be between 1 and 50",
-#                                 saved_files=[],
-#                                 viva=viva_mode)
-#     except ValueError:
-#         return render_template('generated_questions.html',
-#                             questions=[],
-#                             error="Invalid number of questions",
-#                             saved_files=[],
-#                             viva=viva_mode)
-    
-#     # Initialize variables
-#     manual_questions_raw = data.get('manual_questions', '').strip()
-#     manual_questions = []
-#     has_manual_input = bool(manual_questions_raw)
-#     has_file_upload = bool(request.files.getlist('question_files'))
-#     prompt = data.get('topic', '').strip()
-    
-#     # First try to process manual questions and files
-#     if not has_manual_input and not has_file_upload and not prompt:
-#         return render_template('generated_questions.html',
-#                             questions=[],
-#                             error="Please either enter manual questions, upload a file, or provide an AI prompt",
-#                             saved_files=[],
-#                             viva=viva_mode)
-    
-#     # --- CHANGED: Only set up AI if we need it (no manual input and no files, but has prompt) ---
-#     if not has_manual_input and not has_file_upload and prompt:
-#         # Validate Gemini API key
-#         gemini_api_key = os.getenv('GEMINI_API_KEY', '').strip()
-        
-#         if not gemini_api_key:
-#             error_msg = "Invalid or missing Gemini API key. Please check your .env file."
-#             return render_template('generated_questions.html', 
-#                                 questions=[], 
-#                                 error=error_msg,
-#                                 saved_files=[],
-#                                 viva=viva_mode)
-    
-#     # Process manual questions first
-#     if has_manual_input:
-#         for line in manual_questions_raw.splitlines():
-#             if not line.strip():
-#                 continue
-#             parts = [p.strip() for p in line.split('|')]
-#             print(f"[DEBUG] Processing manual line: {parts}")  # DEBUG LINE
-#             if len(parts) < 1:
-#                 continue
-#             if viva_mode:
-#                 manual_questions.append({ 
-#                     'text': parts[0], 
-#                     'type': 'viva',
-#                     'question': parts[0],  # Add for compatibility
-#                     'answer': '[Manual Viva Question]'
-#                 })
-#             else:
-#                 if len(parts) < 3:
-#                     continue
-#                 question_text = parts[0]
-#                 try:
-#                     if parts[-1].isdigit():
-#                         correct_index = int(parts[-1])
-#                         options = parts[1:-1]
-#                     else:
-#                         options = parts[1:]
-#                         correct_index = 0
-#                     if options and 0 <= correct_index < len(options):
-#                         manual_questions.append({ 
-#                             'text': question_text, 
-#                             'options': options, 
-#                             'correct_answer': correct_index, 
-#                             'type': 'mcq',
-#                             'question': question_text,  # Add for compatibility
-#                             'answer': options[correct_index] if correct_index < len(options) else options[0]
-#                         })
-#                 except (ValueError, IndexError):
-#                     continue
-#         if manual_questions:
-#             # Store in session for save_quiz
-#             session['quiz_details'] = {
-#                 'title': data.get('title'),
-#                 'num_questions': num_questions,
-#                 'time_limit': data.get('time_limit'),
-#                 'viva': viva_mode
-#             }
-#             session['generated_questions'] = manual_questions
-#             session['suspicious_flags'] = {
-#                 'random_question_order': data.get('random_question_order') == 'on',
-#                 'random_option_order': data.get('random_option_order') == 'on',
-#                 'plagiarism_detection': data.get('plagiarism_detection') == 'on',
-#                 'strict_time_limits': data.get('strict_time_limits') == 'on',
-#                 'auto_submit': data.get('auto_submit') == 'on',
-#                 'speed_monitoring': data.get('speed_monitoring') == 'on',
-#                 'copy_paste_prevention': data.get('copy_paste_prevention') == 'on',
-#                 'tab_switch_detection': data.get('tab_switch_detection') == 'on',
-#                 'fullscreen_mode': data.get('fullscreen_mode') == 'on',
-#                 'duplicate_login_detection': data.get('duplicate_login_detection') == 'on'
-#             }
-            
-#             return render_template('generated_questions.html', 
-#                                 questions=manual_questions, 
-#                                 error=None, 
-#                                 saved_files=[], 
-#                                 viva=viva_mode)
-
-#     # Handle file uploads
-#     saved_files = []
-#     try:
-#         uploaded_files = request.files.getlist('question_files')
-#         if uploaded_files:
-#             upload_folder = os.path.join(current_app.root_path, 'uploads')
-#             os.makedirs(upload_folder, exist_ok=True)
-            
-#             for file in uploaded_files:
-#                 if file and file.filename:
-#                     if not file.filename.lower().endswith('.txt'):
-#                         continue
-                        
-#                     filename = file.filename
-#                     save_path = os.path.join(upload_folder, filename)
-#                     file.save(save_path)
-#                     saved_files.append(filename)
-                    
-#                     try:
-#                         with open(save_path, 'r', encoding='utf-8') as f:
-#                             file_content = f.read().strip()
-#                             if file_content:
-#                                 for line in file_content.splitlines():
-#                                     parts = [p.strip() for p in line.split('|')]
-#                                     if len(parts) < 1:
-#                                         continue
-#                                     if viva_mode:
-#                                         manual_questions.append({ 
-#                                             'text': parts[0], 
-#                                             'type': 'viva',
-#                                             'question': parts[0],
-#                                             'answer': '[Manual Viva Question]'
-#                                         })
-#                                     else:
-#                                         if len(parts) < 3:
-#                                             continue
-#                                         try:
-#                                             if parts[-1].isdigit():
-#                                                 correct_index = int(parts[-1])
-#                                                 options = parts[1:-1]
-#                                             else:
-#                                                 options = parts[1:]
-#                                                 correct_index = 0
-#                                             if options and 0 <= correct_index < len(options):
-#                                                 manual_questions.append({ 
-#                                                     'text': parts[0], 
-#                                                     'options': options, 
-#                                                     'correct_answer': correct_index, 
-#                                                     'type': 'mcq',
-#                                                     'question': parts[0],
-#                                                     'answer': options[correct_index] if correct_index < len(options) else options[0]
-#                                                 })
-#                                         except (ValueError, IndexError):
-#                                             continue
-#                     except Exception as e:
-#                         print(f"Error reading file {filename}: {e}")
-                        
-#         # If we have questions from files, return them
-#         if manual_questions:
-#             # Store in session for save_quiz
-#             session['quiz_details'] = {
-#                 'title': data.get('title'),
-#                 'num_questions': num_questions,
-#                 'time_limit': data.get('time_limit'),
-#                 'viva': viva_mode
-#             }
-#             session['generated_questions'] = manual_questions
-#             session['suspicious_flags'] = {
-#                 'random_question_order': data.get('random_question_order') == 'on',
-#                 'random_option_order': data.get('random_option_order') == 'on',
-#                 'plagiarism_detection': data.get('plagiarism_detection') == 'on',
-#                 'strict_time_limits': data.get('strict_time_limits') == 'on',
-#                 'auto_submit': data.get('auto_submit') == 'on',
-#                 'speed_monitoring': data.get('speed_monitoring') == 'on',
-#                 'copy_paste_prevention': data.get('copy_paste_prevention') == 'on',
-#                 'tab_switch_detection': data.get('tab_switch_detection') == 'on',
-#                 'fullscreen_mode': data.get('fullscreen_mode') == 'on',
-#                 'duplicate_login_detection': data.get('duplicate_login_detection') == 'on'
-#             }
-            
-#             return render_template('generated_questions.html',
-#                                 questions=manual_questions,
-#                                 error=None,
-#                                 saved_files=saved_files,
-#                                 viva=viva_mode)
-                                
-#     except Exception as e:
-#         print(f"Error handling file uploads: {e}")
-#         # Continue execution even if file uploads fail
-        
-#     # If we still have no questions after processing everything, show error
-#     if not manual_questions and not prompt:
-#         return render_template('generated_questions.html',
-#                             questions=[],
-#                             error="No valid questions found. Please check your input format.",
-#                             saved_files=saved_files,
-#                             viva=viva_mode)
-                            
-#     # If we have manual questions, no need to proceed with AI generation
-#     if manual_questions:
-#         # Store in session for save_quiz
-#         session['quiz_details'] = {
-#             'title': data.get('title'),
-#             'num_questions': num_questions,
-#             'time_limit': data.get('time_limit'),
-#             'viva': viva_mode
-#         }
-#         session['generated_questions'] = manual_questions
-#         session['suspicious_flags'] = {
-#             'random_question_order': data.get('random_question_order') == 'on',
-#             'random_option_order': data.get('random_option_order') == 'on',
-#             'plagiarism_detection': data.get('plagiarism_detection') == 'on',
-#             'strict_time_limits': data.get('strict_time_limits') == 'on',
-#             'auto_submit': data.get('auto_submit') == 'on',
-#             'speed_monitoring': data.get('speed_monitoring') == 'on',
-#             'copy_paste_prevention': data.get('copy_paste_prevention') == 'on',
-#             'tab_switch_detection': data.get('tab_switch_detection') == 'on',
-#             'fullscreen_mode': data.get('fullscreen_mode') == 'on',
-#             'duplicate_login_detection': data.get('duplicate_login_detection') == 'on'
-#         }
-        
-#         return render_template('generated_questions.html',
-#                             questions=manual_questions,
-#                             error=None,
-#                             saved_files=saved_files,
-#                             viva=viva_mode)
-
-#     # --- CHANGED: AI Generation with Gemini API ---
-#     if not has_manual_input and not has_file_upload and prompt:
-#         try:
-#             print(f"[DEBUG] Calling Gemini API with prompt: {prompt}")  # DEBUG LINE
-#             # Generate questions using Gemini
-#             ai_questions = generate_questions_with_gemini(prompt, num_questions, viva_mode)
-#             print(f"[DEBUG] Gemini response: {ai_questions}")  # DEBUG LINE
-            
-#             if "error" in ai_questions:
-#                 print(f"[DEBUG] Gemini error: {ai_questions['error']}")  # DEBUG LINE
-#                 return render_template('generated_questions.html',
-#                                     questions=[],
-#                                     error=ai_questions["error"],
-#                                     saved_files=saved_files,
-#                                     viva=viva_mode)
-            
-#             # Convert to compatible format
-#             display_questions = []
-#             for q in ai_questions:
-#                 if viva_mode:
-#                     display_questions.append({
-#                         'question': q.get('question', ''),
-#                         'answer': q.get('answer', '')
-#                     })
-#                 else:
-#                     display_questions.append({
-#                         'question': q.get('question', ''),
-#                         'options': q.get('options', []),
-#                         'answer': q.get('answer', '')
-#                     })
-            
-#             print(f"[DEBUG] Final questions to display: {display_questions}")  # DEBUG LINE
-#             # display_questions = []
-#             # for q in ai_questions:
-#             #     if viva_mode:
-#             #         display_questions.append({
-#             #             'text': q.get('question', ''),
-#             #             'type': 'viva',
-#             #             'question': q.get('question', ''),
-#             #             'answer': q.get('answer', '')
-#             #         })
-#             #     else:
-#             #         display_questions.append({
-#             #             'text': q.get('question', ''),
-#             #             'options': q.get('options', []),
-#             #             'correct_answer': 0,  # Default, will be calculated
-#             #             'type': 'mcq',
-#             #             'question': q.get('question', ''),
-#             #             'answer': q.get('answer', '')
-#             #         })
-            
-            
-#             # Store in session for save_quiz
-#             session['quiz_details'] = {
-#                 'title': data.get('title'),
-#                 'num_questions': num_questions,
-#                 'time_limit': data.get('time_limit'),
-#                 'viva': viva_mode
-#             }
-#             session['generated_questions'] = display_questions
-            
-#             session['suspicious_flags'] = {
-#                 'random_question_order': data.get('random_question_order') == 'on',
-#                 'random_option_order': data.get('random_option_order') == 'on',
-#                 'plagiarism_detection': data.get('plagiarism_detection') == 'on',
-#                 'strict_time_limits': data.get('strict_time_limits') == 'on',
-#                 'auto_submit': data.get('auto_submit') == 'on',
-#                 'speed_monitoring': data.get('speed_monitoring') == 'on',
-#                 'copy_paste_prevention': data.get('copy_paste_prevention') == 'on',
-#                 'tab_switch_detection': data.get('tab_switch_detection') == 'on',
-#                 'fullscreen_mode': data.get('fullscreen_mode') == 'on',
-#                 'duplicate_login_detection': data.get('duplicate_login_detection') == 'on'
-#             }
-            
-#             return render_template('generated_questions.html', 
-#                                 questions=display_questions, 
-#                                 viva=viva_mode, 
-#                                 saved_files=saved_files)
-                                
-#         except Exception as e:
-#             error_msg = f"Error generating questions with AI: {str(e)}"
-#             return render_template('generated_questions.html',
-#                                 questions=[],
-#                                 error=error_msg,
-#                                 saved_files=saved_files,
-#                                 viva=viva_mode)
-
-#     # Final fallback
-#     return render_template('generated_questions.html',
-#                         questions=[],
-#                         error="Unable to generate questions. Please try again.",
-#                         saved_files=saved_files,
-#                         viva=viva_mode)
+# khatam------------------------------------------------------------------------
 
 @bp_teacher.route('/quiz/<int:quiz_id>')
 @login_required
@@ -1179,6 +879,74 @@ def quiz_answers(quiz_id):
         })
     return render_template('quiz_answers.html', quiz=quiz, questions=question_list)
 
+@bp_teacher.route('/quiz/<int:quiz_id>/report')
+@login_required
+def download_report(quiz_id):
+    
+    # --- STEP 1: Database se data nikaalna (Aapke style mein) ---
+    db = get_db()
+    
+    # Quiz ki details nikaalna (bilkul aapke dashboard query ki tarah)
+    quiz = db.execute(
+        'SELECT q.*, COUNT(qu.id) as question_count FROM quizzes q LEFT JOIN questions qu ON q.id = qu.quiz_id WHERE q.id = ? AND q.teacher_id = ? GROUP BY q.id',
+        (quiz_id, session['user_id'])
+    ).fetchone()
+
+    if not quiz:
+        flash('Quiz not found or you do not have permission.', 'error')
+        # Note: 'teacher.dashboard' aapke HTML file ke url_for se match hona chahiye
+        return redirect(url_for('teacher.dashboard'))
+
+    # Saare results aur students ke naam nikaalna
+    # (Yeh query aapke dashboard ke suspicious_logs query jaisi hai)
+    results = db.execute(
+        'SELECT r.score, u.username FROM results r JOIN users u ON r.student_id = u.id WHERE r.quiz_id = ?',
+        (quiz_id,)
+    ).fetchall()
+
+    if not results:
+        flash('Is quiz ke liye download karne ko koi results nahi hain.', 'info')
+        # Note: 'teacher.quiz_details' aapke route ka naam hona chahiye
+        return redirect(url_for('teacher.quiz_details', quiz_id=quiz_id))
+
+    # --- STEP 2: CSV file banana (Memory mein) ---
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Column ke naam (Header)
+    writer.writerow(['Student Username', 'Score', 'Total Questions', 'Percentage'])
+    
+    question_count = quiz['question_count']
+
+    # --- STEP 3: CSV mein data bharna ---
+    for result in results:
+        score = result['score']
+        username = result['username']
+        
+        # Zero se divide hone se bachne ke liye check
+        percentage_str = "N/A"
+        if question_count > 0:
+            percentage = (score / question_count) * 100
+            percentage_str = "%.2f%%" % percentage # "%.2f" se 2 decimal point tak round karega
+        
+        writer.writerow([
+            username, 
+            score, 
+            question_count, 
+            percentage_str
+        ])
+        
+    # --- STEP 4: File ko download ke liye bhejna ---
+    output.seek(0) # Pointer ko file ke shuru mein laana
+    
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f"attachment;filename={quiz['title']}_{quiz['room_code']}.csv"
+        }
+    )
+    
 # --- Student Routes ---
 @bp_student.route('/dashboard')
 @login_required
@@ -1236,7 +1004,6 @@ def dashboard():
         completed_quiz_count=len(completed_quizzes),
         avg_score=avg_score
     )
-    
     
 @bp_student.route('/quiz/<int:quiz_id>')
 @login_required
@@ -1335,18 +1102,35 @@ def quiz_result(result_id):
         # Normalize both to indices (convert answer text → index if needed)
         options_list = json.loads(q['options'] or '[]')
 
-        try:
-            student_index = int(student_ans) if str(student_ans).isdigit() else options_list.index(student_ans)
-        except:
-            student_index = None
+        # Try to convert student answer to integer index
+        student_index = None
+        if student_ans is not None:
+            try:
+                # First try: if it's already a number (as string or int), use it
+                student_index = int(str(student_ans).strip())
+                # Validate that the index is within bounds
+                if student_index < 0 or student_index >= len(options_list):
+                    student_index = None
+            except (ValueError, TypeError):
+                # Second try: if it's text, find the index in options list
+                try:
+                    student_index = options_list.index(str(student_ans).strip())
+                except (ValueError, AttributeError):
+                    student_index = None
 
         # Normalize correct answer → index
         try:
             correct_index = int(q['correct_answer'])
-        except:
+            # Validate that the correct index is within bounds
+            if correct_index < 0 or correct_index >= len(options_list):
+                correct_index = None
+        except (ValueError, TypeError):
             correct_index = None
 
-        is_correct = (student_index == correct_index)
+        # Compare indices (both must be valid integers)
+        is_correct = (student_index is not None and 
+                     correct_index is not None and 
+                     student_index == correct_index)
         if is_correct:
             correct_count += 1
 
@@ -1398,6 +1182,8 @@ def dashboard():
     teacher_count = db.execute("SELECT COUNT(id) FROM users WHERE role = 'teacher'").fetchone()[0]
     students = db.execute("SELECT id, username, email, password FROM users WHERE role = 'student' ORDER BY username").fetchall()
     teachers = db.execute("SELECT id, username, email, password FROM users WHERE role = 'teacher' ORDER BY username").fetchall()
+    # Fetch contact messages
+    contact_messages = db.execute("SELECT id, name, email, message, created_at FROM contact ORDER BY created_at DESC").fetchall()
     
     return render_template(
         'admin_dashboard_new.html', 
@@ -1405,7 +1191,8 @@ def dashboard():
         student_count=student_count,
         teacher_count=teacher_count,
         students=students,
-        teachers=teachers
+        teachers=teachers,
+        contact_messages=contact_messages
     )
 
 @bp_admin.route('/refresh_passwords/<string:role>', methods=['POST'])
@@ -1505,6 +1292,18 @@ def delete_user(user_id):
         flash('User deleted successfully.', 'success')
     except sqlite3.Error as e:
         flash(f'Error deleting user: {e}', 'error')
+    return redirect(url_for('admin.dashboard'))
+
+@bp_admin.route('/delete_contact/<int:contact_id>', methods=('POST',))
+@admin_required
+def delete_contact(contact_id):
+    db = get_db()
+    try:
+        db.execute('DELETE FROM contact WHERE id = ?', (contact_id,))
+        db.commit()
+        flash('Contact message deleted successfully.', 'success')
+    except sqlite3.Error as e:
+        flash(f'Error deleting contact message: {e}', 'error')
     return redirect(url_for('admin.dashboard'))
 
 # Sending Mail to all---------------------------------------------------
@@ -1702,17 +1501,30 @@ def analytics():
 @login_required
 def api_delete_quiz(quiz_id):
     db = get_db()
+    # Authorization check
     if not db.execute('SELECT id FROM quizzes WHERE id = ? AND teacher_id = ?', (quiz_id, session['user_id'])).fetchone():
-        return jsonify({'error': 'Permission denied'}), 403
+        # If this was an AJAX/JSON request, return JSON error; otherwise flash and redirect
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Permission denied'}), 403
+        flash('Permission denied: you do not own this quiz or it does not exist.', 'danger')
+        return redirect(url_for('teacher.dashboard'))
+
     try:
         db.execute('DELETE FROM results WHERE quiz_id = ?', (quiz_id,))
         db.execute('DELETE FROM questions WHERE quiz_id = ?', (quiz_id,))
         db.execute('DELETE FROM quizzes WHERE id = ?', (quiz_id,))
         db.commit()
-        return jsonify({'message': 'Quiz deleted successfully.'})
-    except db.Error as e:
+        # If AJAX, return JSON; otherwise redirect back with flash message
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'message': 'Quiz deleted successfully.'})
+        flash('Quiz deleted successfully.', 'success')
+        return redirect(url_for('teacher.dashboard'))
+    except sqlite3.Error as e:
         db.rollback()
-        return jsonify({'error': f'Database error: {e}'}), 500
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': f'Database error: {e}'}), 500
+        flash(f'An error occurred while deleting the quiz: {e}', 'danger')
+        return redirect(url_for('teacher.dashboard'))
 
 @bp_student.route('/api/quiz/join', methods=['POST'])
 @login_required
@@ -1808,9 +1620,18 @@ def api_submit_quiz():
                 return jsonify({'error': 'No questions found for this quiz'}), 404
                 
             correct_answers = {str(r['id']): r['correct_answer'] for r in rows}
-            score = sum(1 for q_id, ans in answers.items() 
-                       if q_id in correct_answers and 
-                       str(ans).strip() == str(correct_answers[q_id]).strip())
+            # Convert both student answer and correct answer to integers for proper comparison
+            score = 0
+            for q_id, ans in answers.items():
+                if q_id in correct_answers:
+                    try:
+                        student_ans_int = int(str(ans).strip())
+                        correct_ans_int = int(str(correct_answers[q_id]).strip())
+                        if student_ans_int == correct_ans_int:
+                            score += 1
+                    except (ValueError, TypeError):
+                        # If conversion fails, skip this question
+                        continue
             
             # Log submission
             ip = request.remote_addr
@@ -1936,6 +1757,37 @@ def log_suspicious():
         db.commit()
         return jsonify({'status': 'logged'})
     return jsonify({'status': 'ignored'}), 400
+
+
+@bp_student.route('/api/quiz/start', methods=['POST'])
+@login_required
+def api_quiz_start():
+    """Record a quiz start event. Frontend calls this when entering fullscreen to record authoritative start time.
+
+    Expected JSON: { quiz_id: <int>, fullscreen: <bool, optional> }
+    """
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({'error': 'Invalid JSON'}), 400
+
+    quiz_id = data.get('quiz_id')
+    fullscreen_used = bool(data.get('fullscreen', False))
+    if not quiz_id:
+        return jsonify({'error': 'quiz_id is required'}), 400
+
+    db = get_db()
+    ip = request.remote_addr
+    timestamp = int(time.time())
+    action = 'start_fullscreen' if fullscreen_used else 'start'
+    try:
+        db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
+                   (session['user_id'], quiz_id, action, ip, timestamp))
+        db.commit()
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': f'Failed to log start: {e}'}), 500
 
 @bp_student.route('/api/log_suspicious_js')
 def log_suspicious_js():

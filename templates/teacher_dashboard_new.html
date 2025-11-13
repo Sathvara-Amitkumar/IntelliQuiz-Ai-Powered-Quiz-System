@@ -16,9 +16,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
     <style>
-        /* Consistent styling from other dashboards */
+        /* --- NEW TEACHER DASHBOARD STYLE (BLUE/TEAL THEME) --- */
         :root {
-            --color-primary: #7367F0;
+            /* Changed primary color to a professional blue/teal */
+            --color-primary: #EA5455; /* Was #7367F0 */
+            --color-primary-light: #d1faff; /* New light blue */
+
             --color-success: #28C76F;
             --color-info: #00CFE8;
             --color-danger: #EA5455;
@@ -34,11 +37,17 @@
         /* Sidebar */
         .sidebar { width: var(--sidebar-width); background: var(--color-dark); color: #F8F7FA; display: flex; flex-direction: column; padding: 1.5rem; position: fixed; height: 100%; z-index: 1000; transition: transform 0.3s ease-in-out; }
         .sidebar-brand { font-size: 1.8rem; font-weight: 700; margin-bottom: 2.5rem; color: var(--color-white); padding-left: 0.5rem; text-decoration: none; }
-        .sidebar-brand span { color: var(--color-primary); }
+        .sidebar-brand span { color: var(--color-primary); } /* Will now be blue */
         .sidebar-menu a { display: flex; align-items: center; color: #b0afb4; padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 0.8rem; transition: all 0.3s ease; text-decoration: none; }
         .sidebar-menu a .material-icons-sharp { margin-right: 1.2rem; font-size: 1.6rem; }
         .sidebar-menu a h4 { font-weight: 500; font-size: 1rem; margin: 0; }
-        .sidebar-menu a.active, .sidebar-menu a:hover { background: var(--color-primary); color: var(--color-white); box-shadow: 0 5px 15px rgba(115, 103, 240, 0.4); }
+        
+        /* Updated hover/active shadow to match new blue */
+        .sidebar-menu a.active, .sidebar-menu a:hover { 
+            background: var(--color-primary); 
+            color: var(--color-white); 
+            box-shadow: 0 5px 15px rgba(0, 207, 232, 0.4); /* Blue shadow */
+        }
         .sidebar-footer { margin-top: auto; }
         .social-icons { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem; }
         .social-icons a { color: #b0afb4; font-size: 1.5rem; transition: color 0.3s ease; }
@@ -53,8 +62,11 @@
         .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 2.5rem; }
         .card { background: var(--color-white); padding: 2rem; border-radius: 15px; border: none; box-shadow: 0 4px 25px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 2rem; }
         .card-icon { font-size: 3rem; padding: 1.2rem; border-radius: 50%; display: flex; }
-        .card-icon.quizzes { background-color: #E8E7FD; color: var(--color-primary); }
-        .card-icon.students { background-color: #d1f7ea; color: var(--color-success); }
+        
+        /* Updated card icon colors */
+        .card-icon.quizzes { background-color: var(--color-primary-light); color: var(--color-primary); } /* Light blue */
+        .card-icon.students { background-color: #d1f7ea; color: var(--color-success); } /* Light green */
+        
         .card-info h3 { font-size: 2.8rem; font-weight: 700; color: var(--color-dark); }
         .card-info p { color: #6E6B7B; margin: 0; font-size: 1rem; }
         .data-section { background: var(--color-white); border-radius: 15px; padding: 2rem; box-shadow: 0 4px 25px rgba(0,0,0,0.05); }
@@ -64,8 +76,12 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 1.2rem 1rem; text-align: left; border-bottom: 1px solid #f0f0f0; vertical-align: middle; white-space: nowrap; }
         thead th { font-weight: 600; font-size: 0.9rem; color: #6E6B7B; text-transform: uppercase; }
+        
+        /* Updated button colors */
         .btn { padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 500; text-decoration: none; transition: all 0.2s ease-in-out; }
         .btn-primary { background-color: var(--color-primary); color: var(--color-white); }
+        .btn-primary:hover { background-color: #00b3c7; } /* Darker blue */
+
         .table-actions { display: flex; gap: 0.5rem; }
         .view { display: none; }
         .view.active { display: block; }
@@ -94,14 +110,22 @@
                 <a href="https://www.linkedin.com" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                 <a href="https://github.com" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
             </div>
-            <a href="{{ url_for('auth.logout') }}" class="sidebar-menu"><span class="material-icons-sharp">logout</span><h4>Logout</h4></a>
+            <!-- Sidebar logout removed; header logout is primary -->
         </div>
     </aside>
 
     <main class="main-content">
         <div class="header">
              <h1 id="page-title">Dashboard</h1>
-             <button class="mobile-menu-btn"><span class="material-icons-sharp">menu</span></button>
+             <div style="display:flex;align-items:center;gap:0.75rem;">
+                 <button class="mobile-menu-btn"><span class="material-icons-sharp">menu</span></button>
+                 <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirm('Are you sure you want to logout?');">
+                     <button type="submit" class="btn btn-secondary" title="Logout" style="display:inline-flex;align-items:center;gap:0.5rem;">
+                         <span class="material-icons-sharp">logout</span>
+                         Logout
+                     </button>
+                 </form>
+             </div>
         </div>
         
         <!-- Main Dashboard View -->

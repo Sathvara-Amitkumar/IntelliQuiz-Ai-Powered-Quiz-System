@@ -9,98 +9,41 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
-    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <style>
-        :root {
-            --color-primary: #7367F0;
-            --color-white: #ffffff;
-            --color-light-grey: #F8F7FA;
-            --color-dark: #2C2A3A;
-            --color-dark-grey: #5E5873;
-        }
-
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--color-light-grey); color: var(--color-dark-grey); margin: 0; padding: 0; }
-
-        /* --- Animated Background --- */
-        .background-shapes { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden; z-index: -1; }
-        .circle { position: absolute; border-radius: 50%; background: linear-gradient(45deg, var(--color-primary), #a29dff); opacity: 0.15; transition: transform 0.2s ease-out; }
-
-        /* --- FIXED HEADER --- */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 5%; /* Using percentage for better responsiveness */
-            background-color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            width: 100%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-
-        .brand { font-size: 1.8rem; font-weight: 700; color: var(--color-dark); }
-        .brand span { color: var(--color-primary); }
-
-        .header-nav { display: flex; align-items: center; gap: 2rem; }
-        .nav-links a { margin: 0 1rem; font-weight: 500; color: var(--color-dark-grey); text-decoration: none; position: relative; transition: color 0.3s ease; }
-        .nav-links a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 50%; background-color: var(--color-primary); transition: all 0.3s ease; }
-        .nav-links a:hover, .nav-links a.active { color: var(--color-primary); }
-        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; left: 0; }
-        
-        .btn-login { background-color: var(--color-primary); color: var(--color-white); padding: 0.8rem 1.8rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; white-space: nowrap; }
-        .btn-login:hover { background-color: #6158d6; color: var(--color-white); box-shadow: 0 4px 15px rgba(115, 103, 240, 0.4); transform: translateY(-2px); }
-
-        /* --- Hero Section --- */
-        .hero { text-align: center; padding: 8rem 2rem; position: relative; }
-        .hero h1 { font-size: 4rem; font-weight: 800; color: var(--color-dark); margin-bottom: 1rem; }
-        .hero h1 span { color: var(--color-primary); }
-        .hero p { font-size: 1.3rem; max-width: 700px; margin: 0 auto 2rem auto; color: var(--color-dark-grey); }
-
-        /* --- Features Section --- */
-        .features { padding: 6rem 2rem; background-color: var(--color-white); }
-        .section-title { text-align: center; margin-bottom: 4rem; }
-        .section-title h2 { font-size: 2.5rem; font-weight: 700; color: var(--color-dark); }
-        .section-title p { font-size: 1.1rem; color: var(--color-dark-grey); }
-
-        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
-        .feature-card { background: var(--color-light-grey); padding: 2.5rem; border-radius: 15px; text-align: center; border: 1px solid #eee; transition: all 0.3s ease; }
-        .feature-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.07); }
-        .feature-card .material-icons-sharp { font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem; }
-        .feature-card h3 { font-size: 1.4rem; font-weight: 600; color: var(--color-dark); margin-bottom: 0.5rem; }
-
-        /* --- Footer --- */
-        .footer { background: var(--color-dark); color: var(--color-light-grey); text-align: center; padding: 3rem 2rem; margin-top: 4rem; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="background-shapes"></div>
 
-    <header class="header">
+    <header class="landing-header">
         <div class="brand">Intelli<span>Quiz</span></div>
         <nav class="header-nav">
             <div class="nav-links">
                 <a href="#home" class="active">Home</a>
                 <a href="#features">Features</a>
                 <a href="#about">About</a>
+                <a href="#contact">Contact</a>
             </div>
             <a href="#" class="btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
         </nav>
     </header>
 
     <main>
-        <section id="home" class="hero">
-            <h1 data-aos="fade-down">Welcome to <span>IntelliQuiz</span></h1>
-            <p data-aos="fade-up" data-aos-delay="100">The modern, AI-powered platform for fair and secure examinations. Please log in to access your dashboard.</p>
+        <section id="home" class="hero-section">
+            <div class="hero-content">
+                <h1 data-aos="fade-down">Welcome to <span>IntelliQuiz</span></h1>
+                <p data-aos="fade-up" data-aos-delay="100">The modern, AI-powered platform for fair and secure examinations. Create, manage, and take quizzes with advanced anti-cheating features.</p>
+                <div class="hero-buttons" data-aos="fade-up" data-aos-delay="200">
+                    <a href="#" class="btn btn-hero-primary" data-bs-toggle="modal" data-bs-target="#loginModal">Get Started</a>
+                    <a href="#features" class="btn btn-hero-secondary">Learn More</a>
+                </div>
+            </div>
         </section>
 
-        <section id="features" class="features">
+        <section id="features" class="features-section">
             <div class="container">
                 <div class="section-title" data-aos="fade-up">
                     <h2>Why Choose IntelliQuiz?</h2>
@@ -108,19 +51,25 @@
                 </div>
                 <div class="feature-grid">
                     <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
-                        <span class="material-icons-sharp">auto_awesome</span>
+                        <div class="feature-icon">
+                            <span class="material-icons-sharp">auto_awesome</span>
+                        </div>
                         <h3>AI Question Generation</h3>
-                        <p>Save time by generating relevant viva and MCQ questions automatically using advanced AI.</p>
+                        <p>Save time by generating relevant viva and MCQ questions automatically using advanced AI technology powered by Google Gemini.</p>
                     </div>
                     <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
-                        <span class="material-icons-sharp">shield</span>
-                        <h3>Anti-Cheating</h3>
-                        <p>Ensure exam integrity with features like tab-switching detection and plagiarism checks.</p>
+                        <div class="feature-icon">
+                            <span class="material-icons-sharp">shield</span>
+                        </div>
+                        <h3>Anti-Cheating Features</h3>
+                        <p>Ensure exam integrity with features like tab-switching detection, plagiarism checks, and real-time monitoring.</p>
                     </div>
-                    <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
-                        <span class="material-icons-sharp">analytics</span>
-                        <h3>Detailed Analytics</h3>
-                        <p>Gain insights into student performance with comprehensive dashboards and reports.</p>
+                    <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
+                        <div class="feature-icon">
+                            <span class="material-icons-sharp">security</span>
+                        </div>
+                        <h3>Secure & Reliable</h3>
+                        <p>Built with security in mind. Your data is protected with industry-standard encryption and privacy controls.</p>
                     </div>
                 </div>
             </div>
@@ -128,41 +77,205 @@
 
         <section id="about" class="about-section">
             <div class="container">
-                <div class="section-title">
+                <div class="section-title" data-aos="fade-up">
                     <h2>About IntelliQuiz</h2>
+                    <p>Learn more about our mission and the technology that powers our platform.</p>
                 </div>
-                <div class="row align-items-center">
-                    <div class="col-lg-6 mb-4 mb-lg-0">
-                        <img src="https://images.unsplash.com/photo-1542744095-291d1f67b221?q=80&w=2070" class="img-fluid rounded-3 shadow" alt="Team working in a modern office">
+                <div class="about-content">
+                    <div class="about-image" data-aos="fade-right">
+                        <img src="https://images.unsplash.com/photo-1542744095-291d1f67b221?q=80&w=2070" class="img-fluid" alt="Team working in a modern office">
                     </div>
-                    <div class="col-lg-6">
-                        <div class="about-card mb-4">
-                            <h3><span class="material-icons-sharp">rocket_launch</span> Our Mission</h3>
+                    <div class="about-text">
+                        <div class="about-card" data-aos="fade-left" data-aos-delay="100">
+                            <div class="about-card-header">
+                                <span class="material-icons-sharp">rocket_launch</span>
+                                <h3>Our Mission</h3>
+                            </div>
                             <p>Our mission is to revolutionize the examination process by leveraging cutting-edge AI. We aim to create a fair, secure, and efficient environment that empowers educators and provides a seamless testing experience for students.</p>
                         </div>
-                        <div class="about-card">
-                            <h3><span class="material-icons-sharp">memory</span> Our Technology</h3>
+                        <div class="about-card" data-aos="fade-left" data-aos-delay="200">
+                            <div class="about-card-header">
+                                <span class="material-icons-sharp">memory</span>
+                                <h3>Our Technology</h3>
+                            </div>
                             <p>IntelliQuiz is built on a foundation of powerful technologies. We use advanced generative AI, like Google's Gemini, to create high-quality quiz content in seconds. Our platform includes robust anti-cheating features and provides detailed analytics to track student performance effectively.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
+        <section id="contact" class="contact-section">
+            <div class="container">
+                <div class="section-title" data-aos="fade-up">
+                    <h2>Get In Touch</h2>
+                    <p>Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                </div>
+                <div class="contact-wrapper">
+                    <div class="contact-info" data-aos="fade-right">
+                        <div class="contact-info-item">
+                            <div class="contact-icon">
+                                <span class="material-icons-sharp">email</span>
+                            </div>
+                            <div>
+                                <h4>Email Us</h4>
+                                <p>intelliquiz@gmail.com</p>
+                            </div>
+                        </div>
+                        <div class="contact-info-item">
+                            <div class="contact-icon">
+                                <span class="material-icons-sharp">phone</span>
+                            </div>
+                            <div>
+                                <h4>Call Us</h4>
+                                <p>+91 9824929654</p>
+                            </div>
+                        </div>
+                        <div class="contact-info-item">
+                            <div class="contact-icon">
+                                <span class="material-icons-sharp">location_on</span>
+                            </div>
+                            <div>
+                                <h4>Visit Us</h4>
+                                <p>Mehsana,<br>384130 Gujarat, India</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-form-wrapper" data-aos="fade-left">
+                        <form id="contactForm" method="POST" action="{{ url_for('main.contact') }}" class="contact-form">
+                            <div class="form-group">
+                                <label for="contact_name">Full Name</label>
+                                <input type="text" class="form-control" id="contact_name" name="name" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact_email">Email Address</label>
+                                <input type="email" class="form-control" id="contact_email" name="email" placeholder="Enter your email address" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact_message">Message</label>
+                                <textarea class="form-control" id="contact_message" name="message" rows="6" placeholder="Enter your message here..." required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-contact-submit">
+                                    <span class="material-icons-sharp">send</span>
+                                    Send Message
+                                </button>
+                            </div>
+                        </form>
+                        {% if contact_success %}
+                        <div class="contact-success-message">
+                            <span class="material-icons-sharp">check_circle</span>
+                            <p>Thank you for your message! We'll get back to you soon.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
         
-        {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="position: fixed; top: 1.5rem; right: 2.5rem; z-index: 1055;">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-        {% endfor %}{% endif %}{% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show flash-message" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
     </main>
 
-    <footer class="footer">
-        <div class="social-icons">
-            <a href="https://www.linkedin.com" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-            <a href="https://github.com" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+    <footer class="landing-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="footer-brand">
+                    <h3>Intelli<span>Quiz</span></h3>
+                    <p>The modern AI-powered quiz platform for educators and students.</p>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">Support</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Connect With Us</h4>
+                <div class="social-icons">
+                    <a href="https://www.linkedin.com" target="_blank" aria-label="LinkedIn" class="social-icon">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="https://github.com" target="_blank" aria-label="GitHub" class="social-icon">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="social-icon">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="social-icon">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                </div>
+            </div>
         </div>
-        <p>&copy; 2025 IntelliQuiz. All Rights Reserved.</p>
+        <div class="footer-bottom">
+            <p>&copy; 2025 IntelliQuiz. All Rights Reserved.</p>
+        </div>
     </footer>
 
-    <div class="modal fade" id="loginModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border-radius: 15px;"><div class="modal-header border-0"><h5 class="modal-title fs-4 fw-bold">Login to Your Account</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><form action="{{ url_for('auth.login') }}" method="post"><div class="modal-body px-4"><div class="mb-3"><label for="username" class="form-label">Username</label><input type="text" class="form-control" id="username" name="username" placeholder="Enter your email" required></div><div class="mb-4"><label for="password" class="form-label">Password</label><input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required></div><div class="mb-3"><label class="form-label">Login as:</label><div class="d-flex justify-content-around"><div class="form-check"><input class="form-check-input" type="radio" name="role" id="roleStudent" value="student" checked><label class="form-check-label" for="roleStudent">Student</label></div><div class="form-check"><input class="form-check-input" type="radio" name="role" id="roleTeacher" value="teacher"><label class="form-check-label" for="roleTeacher">Teacher</label></div><div class="form-check"><input class="form-check-input" type="radio" name="role" id="roleAdmin" value="admin"><label class="form-check-label" for="roleAdmin">Admin</label></div></div></div></div><div class="modal-footer border-0 pb-4 px-4"><button type="submit" class="btn btn-primary w-100 fs-5">Login</button></div></form></div></div></div>
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-custom">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fs-4 fw-bold">Login to Your Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('auth.login') }}" method="post">
+                    <div class="modal-body px-4">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your email" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Login as:</label>
+                            <div class="d-flex justify-content-around">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="role" id="roleStudent" value="student" checked>
+                                    <label class="form-check-label" for="roleStudent">Student</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="role" id="roleTeacher" value="teacher">
+                                    <label class="form-check-label" for="roleTeacher">Teacher</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="role" id="roleAdmin" value="admin">
+                                    <label class="form-check-label" for="roleAdmin">Admin</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pb-4 px-4">
+                        <button type="submit" class="btn btn-primary w-100 fs-5">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -182,8 +295,10 @@
                     const circle = document.createElement('div');
                     circle.classList.add('circle');
                     const size = Math.random() * 100 + 50;
-                    circle.style.width = `${size}px`; circle.style.height = `${size}px`;
-                    circle.style.top = `${Math.random() * 100}%`; circle.style.left = `${Math.random() * 100}%`;
+                    circle.style.width = `${size}px`; 
+                    circle.style.height = `${size}px`;
+                    circle.style.top = `${Math.random() * 100}%`; 
+                    circle.style.left = `${Math.random() * 100}%`;
                     circle.dataset.speed = Math.random() * 0.2 + 0.1;
                     shapesContainer.appendChild(circle);
                 }
@@ -192,7 +307,8 @@
                     const mouseY = e.clientY / window.innerHeight - 0.5;
                     document.querySelectorAll('.circle').forEach(circle => {
                         const speed = parseFloat(circle.dataset.speed) * 100;
-                        const x = -mouseX * speed; const y = -mouseY * speed;
+                        const x = -mouseX * speed; 
+                        const y = -mouseY * speed;
                         circle.style.transform = `translate(${x}px, ${y}px)`;
                     });
                 });
@@ -205,7 +321,7 @@
                 let current = 'home';
                 sections.forEach(section => {
                     const sectionTop = section.offsetTop;
-                    if (window.pageYOffset >= sectionTop - 100) {
+                    if (window.pageYOffset >= sectionTop - 150) {
                         current = section.getAttribute('id');
                     }
                 });
@@ -216,6 +332,20 @@
                     }
                 });
             };
+
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
         });
     </script>
 </body>

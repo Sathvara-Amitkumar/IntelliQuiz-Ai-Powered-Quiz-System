@@ -7,39 +7,60 @@
     <title>Review Generated Questions</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body style="background-color: var(--slate-100);">
-    <div class="container" style="max-width: 1000px; padding: 2rem 1rem;">
-        <header style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <a href="{{ url_for('teacher.create_quiz') }}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+<body class="generated-questions-page">
+    <div class="generated-questions-container">
+        <div class="generated-questions-header">
+            <div class="generated-questions-header-top">
+                <a href="{{ url_for('teacher.create_quiz') }}" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                     </svg>
                     Back to Quiz Setup
                 </a>
-                <div class="quiz-info" style="text-align: right;">
+                <div class="quiz-info">
                     <span class="badge quiz-type-badge {% if not viva %}quiz-type-mcq{% else %}quiz-type-viva{% endif %}">
                         {{ 'Multiple Choice' if not viva else 'Open-ended' }}
                     </span>
                 </div>
             </div>
-            <h1 style="font-size: 2rem; color: var(--slate-900); margin-bottom: 0.5rem;">Review Generated Questions</h1>
-            <p style="color: var(--slate-600); font-size: 1.1rem;">Review and edit the AI-generated questions before finalizing your quiz.</p>
-        </header>
+            <h1 class="generated-questions-title">Review Generated Questions</h1>
+            <p class="generated-questions-subtitle">Review and edit the AI-generated questions before finalizing your quiz.</p>
+        </div>
+
+        {% if questions %}
+        <div class="quiz-stats-bar">
+            <div class="quiz-stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                <span class="quiz-stat-label">Total Questions:</span>
+                <span class="quiz-stat-value">{{ questions|length }}</span>
+            </div>
+            <div class="quiz-stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span class="quiz-stat-label">Quiz Type:</span>
+                <span class="quiz-stat-value">{{ 'Multiple Choice' if not viva else 'Open-ended (Viva)' }}</span>
+            </div>
+        </div>
+        {% endif %}
 
         {% if saved_files %}
-        <div style="background: linear-gradient(to right, var(--primary-50), var(--slate-50)); border: 1px solid var(--primary-100); border-radius: 0.75rem; padding: 1.2rem; margin-bottom: 2rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--primary-700); margin-bottom: 0.75rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="attached-files-box">
+            <div class="attached-files-header">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
                     <polyline points="13 2 13 9 20 9"/>
                 </svg>
                 <strong>Attached Files</strong>
             </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="attached-files-list">
                 {% for fname in saved_files %}
-                <div style="background: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; color: var(--slate-700); display: flex; align-items: center; gap: 0.5rem;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="attached-file-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
                         <polyline points="13 2 13 9 20 9"/>
                     </svg>
@@ -51,16 +72,16 @@
         {% endif %}
 
         {% if error %}
-            <div class="error-message" style="margin-bottom: 2rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--red-700);">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    {{ error }}
-                </div>
+        <div class="error-message">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>{{ error }}</span>
             </div>
+        </div>
         {% endif %}
 
         {% if questions %}
@@ -85,46 +106,70 @@
             <input type="hidden" name="{{ flag }}" value="{{ 'true' if request.form.get(flag) else 'false' }}">
             {% endfor %}
             
-            <div class="question-list" style="display: grid; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="questions-grid">
                 {% for question in questions %}
                     {% set qidx = loop.index0 %}
-                    <div class="card question-card" style="background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--slate-200);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <span class="question-number {% if not viva %}question-number-mcq{% else %}question-number-viva{% endif %}">Question {{ loop.index }}</span>
-                                <button type="button" class="btn-icon regenerate-btn" title="Regenerate this question" style="background: none; border: none; color: var(--slate-500); cursor: pointer; padding: 0.5rem; border-radius: 0.375rem; transition: all 0.2s ease;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
-                                    </svg>
-                                </button>
+                    <div class="question-card">
+                        <div class="question-card-header">
+                            <div class="question-card-header-top">
+                                <span class="question-number {% if not viva %}question-number-mcq{% else %}question-number-viva{% endif %}">
+                                    Question {{ loop.index }}
+                                </span>
+                                <div class="question-card-actions">
+                                    <button type="button" class="btn-icon edit" title="Edit this question">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="btn-icon regenerate-btn delete" title="Regenerate this question">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group">
                                 <label for="question_{{ qidx }}" class="sr-only">Question Text</label>
                                 <textarea name="question_text_{{ qidx }}" id="question_{{ qidx }}" rows="3" 
-                                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--slate-200); border-radius: 0.5rem; resize: vertical; background: var(--slate-50);"
-                                >{{ question.text }}</textarea>
+                                    class="question-text-area" readonly>{{ question.text }}</textarea>
                             </div>
                         </div>
 
                         {% if not viva and question.options %}
-                        <div style="padding: 1.5rem;">
-                            <div style="display: grid; gap: 1rem;">
+                        <div class="question-card-body">
+                            <div class="options-list">
                                 {% for option in question.options %}
-                                <div class="option-row" style="display: flex; align-items: center; gap: 1rem;">
-                                    <div style="flex-grow: 1;">
-                                        <input type="text" name="option_{{ qidx }}_{{ loop.index0 }}" 
-                                            value="{{ option }}" 
-                                            placeholder="Option {{ loop.index }}"
-                                            style="width: 100%; padding: 0.75rem; border: 1px solid var(--slate-200); border-radius: 0.5rem; background: white;">
-                                    </div>
-                                    <label class="correct-answer" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <div class="option-row {% if question.correct_answer is defined and question.correct_answer == loop.index0 %}selected{% endif %}">
+                                    <input type="text" name="option_{{ qidx }}_{{ loop.index0 }}" 
+                                        value="{{ option }}" 
+                                        placeholder="Option {{ loop.index }}"
+                                        class="option-input" readonly>
+                                    <label class="correct-answer-label">
                                         <input type="radio" name="correct_{{ qidx }}" value="{{ loop.index0 }}" 
-                                            {% if question.correct_answer is defined and question.correct_answer == loop.index0 %}checked{% endif %}
-                                            style="width: 1.2rem; height: 1.2rem; accent-color: var(--primary-600);">
-                                        <span style="color: var(--slate-700); font-size: 0.9rem;">Correct</span>
+                                            {% if question.correct_answer is defined and question.correct_answer == loop.index0 %}checked{% endif %}>
+                                        <span>Correct Answer</span>
+                                        <span class="correct-badge">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M20 6L9 17l-5-5"/>
+                                            </svg>
+                                            Correct
+                                        </span>
                                     </label>
                                 </div>
                                 {% endfor %}
+                            </div>
+                        </div>
+                        {% elif viva and question.answer %}
+                        <div class="question-card-body">
+                            <div class="viva-answer-section">
+                                <div class="viva-answer-label">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                    </svg>
+                                    Expected Answer
+                                </div>
+                                <div class="viva-answer-text">{{ question.answer }}</div>
                             </div>
                         </div>
                         {% endif %}
@@ -132,17 +177,17 @@
                 {% endfor %}
             </div>
 
-            <div class="form-actions" style="position: sticky; bottom: 0; background: var(--slate-100); padding: 1rem 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-                <div class="action-group-left">
-                    <a href="{{ url_for('teacher.create_quiz') }}" class="btn" style="background: var(--slate-200); color: var(--slate-700); display: inline-flex; align-items: center; gap: 0.5rem;">
+            <div class="form-actions-sticky">
+                <div class="form-actions-group">
+                    <a href="{{ url_for('teacher.create_quiz') }}" class="btn btn-secondary">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
                         </svg>
                         Regenerate All
                     </a>
                 </div>
-                <div class="action-group-right">
-                    <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(to right, var(--primary-600), var(--primary-700));">
+                <div class="form-actions-group">
+                    <button type="submit" class="btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
                             <polyline points="17 21 17 13 7 13 7 21"/>
@@ -154,19 +199,40 @@
             </div>
         </form>
         {% else %}
-        <div style="text-align: center; padding: 4rem 1rem;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 1rem; color: var(--slate-400);">
+        <div class="no-questions-state">
+            <svg class="no-questions-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="16" x2="12" y2="12"/>
                 <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            <p style="color: var(--slate-600); font-size: 1.1rem;">No questions have been generated yet.</p>
-            <a href="{{ url_for('teacher.create_quiz') }}" class="btn btn-primary" style="margin-top: 1rem;">Create New Quiz</a>
+            <p class="no-questions-text">No questions have been generated yet.</p>
+            <a href="{{ url_for('teacher.create_quiz') }}" class="btn btn-primary">Create New Quiz</a>
         </div>
         {% endif %}
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Highlight selected correct answers
+        document.querySelectorAll('input[type="radio"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                // Remove selected class from all option rows in the same question
+                const questionCard = this.closest('.question-card');
+                questionCard.querySelectorAll('.option-row').forEach(function(row) {
+                    row.classList.remove('selected');
+                });
+                
+                // Add selected class to the parent option row
+                if (this.checked) {
+                    this.closest('.option-row')?.classList.add('selected');
+                }
+            });
+            
+            // Initialize selected state
+            if (radio.checked) {
+                radio.closest('.option-row')?.classList.add('selected');
+            }
+        });
+        
         const form = document.getElementById('finalize-quiz-form');
         if (form) {
             form.addEventListener('submit', async function(e) {

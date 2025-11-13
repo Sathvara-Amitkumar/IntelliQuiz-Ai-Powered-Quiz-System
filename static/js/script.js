@@ -102,8 +102,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let questionsData = window.quizConfig.questionsData;
         let currentQuestionIndex = 0;
         let studentAnswers = new Array(questionsData.length).fill(null);
-        let timeLeft;
-        let timerInterval;
+    let timeLeft;
+    let timerInterval;
+    // Only start the quiz timer after the student has started (used for fullscreen requirement)
+    let quizStarted = true;
         let tabSwitchCount = 0;
         let rapidChangeCount = 0;
         let lastChangeTime = Date.now();
@@ -139,22 +141,104 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (tabSwitchCount > 3) doAutoSubmit(AUTO_SUBMIT_REASON.TAB);
             });
         }
-        // Fullscreen required
+        // Fullscreen required — improved flow:
+        // - Show an overlay with a user-gesture button to enter fullscreen (browsers require a gesture)
+        // - Pause the timer until fullscreen is entered
+        // - Track fullscreen exits, log them and auto-submit after a configurable threshold
         if (antiCheatingFeatures.fullscreen_mode) {
-            function ensureFullscreen() {
-                if (!document.fullscreenElement && quizForm.requestFullscreen) {
-                    quizForm.requestFullscreen().catch(function(){
-                        // If cannot enter fullscreen, warn and optionally auto-submit
-                        alert('This quiz requires fullscreen. Please allow fullscreen to continue.');
-                        doAutoSubmit(AUTO_SUBMIT_REASON.FULLSCREEN);
-                    });
-                }
+            quizStarted = false; // wait for user to explicitly start
+            const exitThreshold = (typeof antiCheatingFeatures.fullscreen_exit_threshold === 'number') ? antiCheatingFeatures.fullscreen_exit_threshold : 1;
+            let fullscreenExitCount = 0;
+
+            // Create and show overlay if not present
+            let overlay = document.getElementById('fullscreen-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'fullscreen-overlay';
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.background = 'rgba(0,0,0,0.85)';
+                overlay.style.color = '#fff';
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+                overlay.style.zIndex = '9999';
+                overlay.innerHTML = `
+                    <div style="max-width:720px;padding:24px;text-align:center;">
+                        <h2 style="margin-bottom:12px;">This quiz requires fullscreen</h2>
+                        <p style="margin-bottom:18px;">To help prevent cheating, the quiz must be taken in fullscreen. Click the button below to enter fullscreen and start the quiz.</p>
+                        <button id="enter-fullscreen-btn" class="btn btn-primary" style="padding:12px 20px;font-size:16px;">Enter Fullscreen & Start Quiz</button>
+                        <p style="margin-top:12px;font-size:0.9rem;opacity:0.9;">If your browser blocks the fullscreen request, please click the button again. If you'd like to continue without fullscreen, contact your instructor.</p>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
             }
-            ensureFullscreen();
+
+            const enterBtn = document.getElementById('enter-fullscreen-btn');
+            function requestFullscreenOnElement(el) {
+                if (!el) return Promise.reject(new Error('No element to fullscreen'));
+                // Standard API
+                if (el.requestFullscreen) return el.requestFullscreen();
+                // Vendor prefixes
+                if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+                if (el.mozRequestFullScreen) return el.mozRequestFullScreen();
+                if (el.msRequestFullscreen) return el.msRequestFullscreen();
+                return Promise.reject(new Error('Fullscreen API not supported'));
+            }
+
+            function hideOverlayAndStart() {
+                if (overlay) overlay.style.display = 'none';
+                quizStarted = true;
+            }
+
+            if (enterBtn) {
+                enterBtn.addEventListener('click', function() {
+                    // Try to request fullscreen as a user gesture
+                    requestFullscreenOnElement(quizForm).then(function() {
+                        hideOverlayAndStart();
+                        // Optionally notify server that quiz started in fullscreen
+                        try {
+                            fetch('/student/api/quiz/start', {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ quiz_id: quizForm.dataset.quizId })
+                            }).catch(function(){});
+                        } catch (e) {}
+                    }).catch(function(err) {
+                        // If requestFullscreen was blocked or not supported, keep overlay visible and inform the user
+                        alert('Unable to enter fullscreen automatically. Please allow fullscreen or try again by clicking the button.');
+                    });
+                });
+            }
+
+            // If user presses F11 or browser enters fullscreen by other means, treat that as started too
             document.addEventListener('fullscreenchange', function(){
-                if (!document.fullscreenElement) {
+                if (document.fullscreenElement) {
+                    // Entered fullscreen
+                    hideOverlayAndStart();
+                } else {
+                    // Exited fullscreen
+                    fullscreenExitCount++;
                     alert('You exited fullscreen. This action is logged.');
-                    if (antiCheatingFeatures.auto_submit) doAutoSubmit(AUTO_SUBMIT_REASON.FULLSCREEN);
+                    fetch('/student/api/log_suspicious', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ event: 'fullscreen_exit', quiz_id: quizForm.dataset.quizId, count: fullscreenExitCount })
+                    }).catch(function(){});
+                    if (typeof antiCheatingFeatures.fullscreen_exit_action === 'string' && antiCheatingFeatures.fullscreen_exit_action === 'warn_only') {
+                        // just warn
+                    } else {
+                        // Default: enforce auto-submit after threshold
+                        if (fullscreenExitCount > 0 && fullscreenExitCount >= exitThreshold) {
+                            if (antiCheatingFeatures.auto_submit) doAutoSubmit(AUTO_SUBMIT_REASON.FULLSCREEN);
+                        }
+                    }
                 }
             });
         }
@@ -180,10 +264,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const timeLimitMinutes = parseInt(quizForm.dataset.timeLimit, 10);
         timeLeft = timeLimitMinutes * 60;
         timerInterval = setInterval(function() {
+            // Don't decrement the timer until the quiz is started (e.g., after entering fullscreen)
+            if (!quizStarted) return;
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 timerElement.textContent = "Time's Up!";
-                quizForm.requestSubmit();
+                try { quizForm.requestSubmit(); } catch (_) { quizForm.submit(); }
                 return;
             }
             timeLeft--;
@@ -261,7 +347,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const answersPayload = {};
             questionsData.forEach(function(q, index) {
                 if (studentAnswers[index] !== null) {
-                    const answer = q.optionMapping ? q.optionMapping.indexOf(studentAnswers[index]) : studentAnswers[index];
+                    // studentAnswers[index] already stores the original (correct) answer index
+                    // We don't need to look it up in optionMapping - just use it directly
+                    const answer = studentAnswers[index];
                     answersPayload[q.id] = answer;
                 }
             });

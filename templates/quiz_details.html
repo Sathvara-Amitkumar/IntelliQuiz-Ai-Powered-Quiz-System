@@ -27,7 +27,21 @@
         <main class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h2 style="font-size: 1.5rem; font-weight: 600;">Student Results</h2>
-                <button class="btn btn-danger" id="delete-quiz-btn" data-quiz-id="{{ quiz.id }}">Delete Quiz</button>
+                <div style="display: flex; gap: 1rem;">
+                    
+                    
+                    <a href="{{ url_for('teacher.download_report', quiz_id=quiz.id) }}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download CSV
+                    </a>
+                    
+                    <button class="btn btn-danger" id="delete-quiz-btn" data-quiz-id="{{ quiz.id }}">Delete Quiz</button>
+                </div>
+                <!-- <button class="btn btn-danger" id="delete-quiz-btn" data-quiz-id="{{ quiz.id }}">Delete Quiz</button> -->
             </div>
             {% if results %}
             <div style="overflow-x: auto; border-radius: 0.5rem; border: 1px solid var(--slate-200);">
