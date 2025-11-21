@@ -109,10 +109,15 @@
     <main class="main-content">
         <div class="header">
              <h1 id="page-title">Dashboard</h1>
-             <div style="display:flex;align-items:center;gap:0.75rem;">
+             <div class="header-actions">
                  <button class="mobile-menu-btn"><span class="material-icons-sharp">menu</span></button>
-                 <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirm('Are you sure you want to logout?');">
-                     <button type="submit" class="btn btn-secondary" title="Logout" style="display:inline-flex;align-items:center;gap:0.5rem;">
+                <!-- <button type="button" class="profile-icon-btn" data-bs-toggle="modal" data-bs-target="#profileModal" title="Profile">
+                    <span class="avatar-initial avatar-initial-small" data-initial="{{ username[0] if username else 'U' }}">{{ username[0] if username else 'U' }}</span>
+                </button> -->
+                <button type="button" class="profile-icon-btn" data-bs-toggle="modal" data-bs-target="#profileModal" title="Profile"><span class="material-icons-sharp">person</span></button>
+                <br><br> 
+                <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirm('Are you sure you want to logout?');">
+                     <button type="submit" class="btn btn-secondary btn-logout" title="Logout">
                          <span class="material-icons-sharp">logout</span>
                          Logout
                      </button>
@@ -253,5 +258,61 @@
             });
         });
     </script>
+    
+    <!-- Profile Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileModalLabel">My Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('student.profile') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3 text-center">
+                            <div class="avatar-container">
+                                <span class="avatar-initial avatar-initial-medium" data-initial="{{ username[0] if username else 'U' }}">{{ username[0] if username else 'U' }}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" value="{{ username }}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" value="{{ user_email }}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mobile" class="form-label">Mobile (Optional)</label>
+                            <input type="tel" class="form-control" id="mobile" name="mobile" value="{{ profile.mobile if profile else '' }}" placeholder="Enter mobile number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="enrollment_number" class="form-label">Enrollment Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="enrollment_number" name="enrollment_number" value="{{ profile.enrollment_number if profile else '' }}" placeholder="11 digits" maxlength="11" pattern="[0-9]{11}" required>
+                            <small class="form-text text-muted">Must be exactly 11 digits</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="class" class="form-label">Class <span class="text-danger">*</span></label>
+                            <select class="form-select" id="class" name="class" required>
+                                <option value="">-- Select Class --</option>
+                                <option value="7IT-A" {% if profile and profile.class == '7IT-A' %}selected{% endif %}>7IT-A</option>
+                                <option value="7IT-B" {% if profile and profile.class == '7IT-B' %}selected{% endif %}>7IT-B</option>
+                                <option value="7CE-A" {% if profile and profile.class == '7CE-A' %}selected{% endif %}>7CE-A</option>
+                                <option value="7CE-B" {% if profile and profile.class == '7CE-B' %}selected{% endif %}>7CE-B</option>
+                                <option value="7CE-C" {% if profile and profile.class == '7CE-C' %}selected{% endif %}>7CE-C</option>
+                                <option value="7-IOT" {% if profile and profile.class == '7-IOT' %}selected{% endif %}>7-IOT</option>
+                                <option value="7-AI" {% if profile and profile.class == '7-AI' %}selected{% endif %}>7-AI</option>
+                                <option value="7-CSBS" {% if profile and profile.class == '7-CSBS' %}selected{% endif %}>7-CSBS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

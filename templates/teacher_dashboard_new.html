@@ -163,24 +163,35 @@
                 </div>
                 <div class="table-responsive">
                     <table>
-                        <thead><tr><th>Title</th><th>Room Code</th><th>Questions</th><th>Created</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Title</th><th>Room Code</th><th>Questions</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
                         <tbody>
                             {% for quiz in quizzes %}
                             <tr>
                                 <td>{{ quiz.title }}</td>
                                 <td>{{ quiz.room_code }}</td>
                                 <td>{{ quiz.question_count }}</td>
+                                <td>
+                                    <div class="quiz-status-cell">
+                                        <span class="quiz-status-badge {% if quiz.is_active %}status-active{% else %}status-inactive{% endif %}" data-quiz-id="{{ quiz.id }}">
+                                            {% if quiz.is_active %}🟢 Active{% else %}🔴 Inactive{% endif %}
+                                        </span>
+                                        <label class="quiz-toggle-switch">
+                                            <input type="checkbox" class="quiz-toggle-input" data-quiz-id="{{ quiz.id }}" {% if quiz.is_active %}checked{% endif %}>
+                                            <span class="quiz-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </td>
                                 <td>{{ quiz.created_at.strftime('%Y-%m-%d') if quiz.created_at else 'N/A' }}</td>
                                 <td>
                                     <div class="table-actions">
                                         <a href="{{ url_for('teacher.quiz_details', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-info">Results</a>
-                                        <a href="{{ url_for('teacher.create_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-info">Edit</a>
+                                        <!-- <a href="{{ url_for('teacher.create_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-info">Edit</a> -->
                                         <form action="{{ url_for('teacher.api_delete_quiz', quiz_id=quiz.id) }}" method="post" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn btn-sm btn-outline-danger">Delete</button></form>
                                     </div>
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="4" class="text-center p-5">You haven't created any quizzes yet.</td></tr>
+                            <tr><td colspan="6" class="text-center p-5">You haven't created any quizzes yet.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -299,6 +310,58 @@
                     
                     pageTitle.textContent = link.querySelector('h4').textContent;
                     sidebar.classList.remove('open');
+                });
+            });
+            
+            // Quiz Toggle Functionality
+            const toggleInputs = document.querySelectorAll('.quiz-toggle-input');
+            toggleInputs.forEach(toggle => {
+                toggle.addEventListener('change', async function() {
+                    const quizId = this.dataset.quizId;
+                    const isChecked = this.checked;
+                    const badge = document.querySelector(`.quiz-status-badge[data-quiz-id="${quizId}"]`);
+                    const toggleElement = this;
+                    
+                    // Disable toggle during request
+                    toggleElement.disabled = true;
+                    
+                    try {
+                        const response = await fetch(`/teacher/quiz/${quizId}/toggle_active`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            credentials: 'same-origin'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok && data.success) {
+                            // Update badge
+                            if (data.new_status) {
+                                badge.textContent = '🟢 Active';
+                                badge.classList.remove('status-inactive');
+                                badge.classList.add('status-active');
+                            } else {
+                                badge.textContent = '🔴 Inactive';
+                                badge.classList.remove('status-active');
+                                badge.classList.add('status-inactive');
+                            }
+                        } else {
+                            // Revert toggle on error
+                            toggleElement.checked = !isChecked;
+                            alert(data.error || 'Failed to update quiz status. Please try again.');
+                        }
+                    } catch (error) {
+                        // Revert toggle on error
+                        toggleElement.checked = !isChecked;
+                        console.error('Error toggling quiz status:', error);
+                        alert('An error occurred while updating quiz status. Please try again.');
+                    } finally {
+                        // Re-enable toggle
+                        toggleElement.disabled = false;
+                    }
                 });
             });
         });

@@ -70,7 +70,7 @@ def close_db(e=None):
         try:
             db.commit()  # Commit any pending transactions
         except sqlite3.Error:
-            db.rollback()  # Rollback if commit fails
+            db.rollback()  # Rollback if 
         finally:
             db.close()
 
@@ -129,6 +129,30 @@ def init_app_commands(app):
                     db.execute(f'SELECT 1 FROM {table} LIMIT 1')
                 except sqlite3.OperationalError:
                     raise Exception(f"Critical table '{table}' is missing")
+            
+            # Migration: Add is_active column to quizzes table if it doesn't exist
+            try:
+                db.execute('SELECT is_active FROM quizzes LIMIT 1')
+            except sqlite3.OperationalError:
+                # Column doesn't exist, add it
+                print("Adding is_active column to quizzes table...")
+                db.execute('ALTER TABLE quizzes ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1')
+                # Set all existing quizzes as active
+                db.execute('UPDATE quizzes SET is_active = 1 WHERE is_active IS NULL')
+                db.commit()
+                print("Migration completed: is_active column added to quizzes table.")
+            
+            # Migration: Add is_active column to users table if it doesn't exist
+            try:
+                db.execute('SELECT is_active FROM users LIMIT 1')
+            except sqlite3.OperationalError:
+                # Column doesn't exist, add it
+                print("Adding is_active column to users table...")
+                db.execute('ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1')
+                # Set all existing users as active
+                db.execute('UPDATE users SET is_active = 1 WHERE is_active IS NULL')
+                db.commit()
+                print("Migration completed: is_active column added to users table.")
             
         except Exception as e:
             print(f"Error initializing database: {e}")
@@ -356,7 +380,15 @@ def login():
             user = db.execute('SELECT * FROM users WHERE username = ? AND role = "admin"', (username,)).fetchone()
     # Handle student and teacher login from the database
     else:
-        user = db.execute('SELECT * FROM users WHERE email = ? AND password = ? AND role = ?', (username, password, role)).fetchone()
+        user = db.execute('SELECT *, COALESCE(is_active, 1) as is_active FROM users WHERE email = ? AND password = ? AND role = ?', (username, password, role)).fetchone()
+        
+        # Check if student account is active
+        if user and role == 'student':
+            is_active = user['is_active']
+            # Handle 0 as inactive (1 is active, 0 is inactive)
+            if is_active == 0:
+                flash('Your account is deactivated. Contact admin.', 'danger')
+                return redirect(url_for('main.index'))
 
     # If login is successful, create the session
     if user:
@@ -403,7 +435,7 @@ def logout():
 def dashboard():
     db = get_db()
     quizzes_raw = db.execute(
-        'SELECT q.*, COUNT(qu.id) as question_count FROM quizzes q LEFT JOIN questions qu ON q.id = qu.quiz_id WHERE q.teacher_id = ? GROUP BY q.id ORDER BY q.created_at DESC',
+        'SELECT q.*, COUNT(qu.id) as question_count, COALESCE(q.is_active, 1) as is_active FROM quizzes q LEFT JOIN questions qu ON q.id = qu.quiz_id WHERE q.teacher_id = ? GROUP BY q.id ORDER BY q.created_at DESC',
         (session['user_id'],)
     ).fetchall()
     quiz_count = db.execute('SELECT COUNT(*) FROM quizzes WHERE teacher_id = ?', (session['user_id'],)).fetchone()[0]
@@ -547,6 +579,18 @@ def clear_suspicious_logs():
         
     return redirect(url_for('teacher.dashboard'))
 
+@bp_teacher.route('/student/<int:student_id>/profile')
+@teacher_or_admin_required
+def view_student_profile_teacher(student_id):
+    """View student profile (teacher)"""
+    db = get_db()
+    student = db.execute('SELECT id, username, email, COALESCE(is_active, 1) as is_active FROM users WHERE id = ? AND role = "student"', (student_id,)).fetchone()
+    if not student:
+        flash('Student not found.', 'danger')
+        return redirect(url_for('teacher.dashboard'))
+    
+    profile = db.execute('SELECT * FROM student_profiles WHERE user_id = ?', (student_id,)).fetchone()
+    return render_template('view_student_profile.html', student=student, profile=profile, is_admin=False)
 
 # --- Teacher: Create Quiz (GET) ---
 @bp_teacher.route('/create')
@@ -959,9 +1003,9 @@ def dashboard():
     user_id = session.get('user_id')
     db = get_db()
 
-    # Fetch all quizzes available in the system
+    # Fetch all active quizzes available in the system
     all_quizzes = db.execute(
-        'SELECT id, title, created_at FROM quizzes ORDER BY created_at DESC'
+        'SELECT id, title, created_at FROM quizzes WHERE COALESCE(is_active, 1) = 1 ORDER BY created_at DESC'
     ).fetchall()
 
     # Fetch all of this student's past submissions
@@ -995,14 +1039,20 @@ def dashboard():
     total_score = sum(q['score'] for q in completed_quizzes)
     avg_score = (total_score / len(completed_quizzes)) if completed_quizzes else 0
 
+    # Get student profile and user email
+    profile = db.execute('SELECT * FROM student_profiles WHERE user_id = ?', (user_id,)).fetchone()
+    user = db.execute('SELECT email FROM users WHERE id = ?', (user_id,)).fetchone()
+    
     return render_template(
         'student_dashboard.html',
         username=session.get('username'),
+        user_email=user['email'] if user else '',
         available_quizzes=available_quizzes,
         completed_quizzes=completed_quizzes,
         available_quiz_count=len(available_quizzes),
         completed_quiz_count=len(completed_quizzes),
-        avg_score=avg_score
+        avg_score=avg_score,
+        profile=profile
     )
     
 @bp_student.route('/quiz/<int:quiz_id>')
@@ -1010,13 +1060,17 @@ def dashboard():
 def take_quiz(quiz_id):
     db = get_db()
     # Get quiz with anti-cheating features
-    quiz = db.execute('SELECT q.*, q.time_limit, COALESCE(q.anti_cheating_features, "{}") as anti_cheating_features FROM quizzes q WHERE q.id = ?', (quiz_id,)).fetchone()
+    quiz = db.execute('SELECT q.*, q.time_limit, COALESCE(q.anti_cheating_features, "{}") as anti_cheating_features, COALESCE(q.is_active, 1) as is_active FROM quizzes q WHERE q.id = ?', (quiz_id,)).fetchone()
     if quiz:
         print(f"[DEBUG take_quiz] user_id={session.get('user_id')}, quiz_id={quiz_id}, quiz_id={quiz['id']}, quiz_title={quiz['title']}")
     else:
         print(f"[DEBUG take_quiz] user_id={session.get('user_id')}, quiz_id={quiz_id}, quiz=None")
     if not quiz:
         flash('Quiz not found.')
+        return redirect(url_for('student.dashboard'))
+    # Check if quiz is active
+    if not quiz['is_active']:
+        flash('This quiz is currently inactive. Please contact your teacher.')
         return redirect(url_for('student.dashboard'))
     # Prevent retake: check if result exists
     result = db.execute('SELECT id FROM results WHERE quiz_id = ? AND student_id = ?', (quiz_id, session['user_id'])).fetchone()
@@ -1164,6 +1218,113 @@ def quiz_result(result_id):
         solution=solution_details
     )
 
+# --- Student Profile Routes ---
+@bp_student.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if session.get('role') != 'student':
+        flash('You do not have permission to view this page.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    user_id = session.get('user_id')
+    db = get_db()
+    
+    # Get user info
+    user = db.execute('SELECT id, username, email FROM users WHERE id = ?', (user_id,)).fetchone()
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('student.dashboard'))
+    
+    # Get or create profile
+    profile = db.execute('SELECT * FROM student_profiles WHERE user_id = ?', (user_id,)).fetchone()
+    
+    if request.method == 'POST':
+        mobile = request.form.get('mobile', '').strip()
+        enrollment_number = request.form.get('enrollment_number', '').strip()
+        class_name = request.form.get('class', '').strip()
+        
+        # Validate enrollment number (11 digits)
+        if enrollment_number and (not enrollment_number.isdigit() or len(enrollment_number) != 11):
+            flash('Enrollment number must be exactly 11 digits.', 'danger')
+            return redirect(url_for('student.profile'))
+        
+        # Handle photo upload
+        photo_path = None
+        if 'photo' in request.files:
+            photo = request.files['photo']
+            if photo and photo.filename:
+                # Validate file type
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+                if '.' in photo.filename and photo.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+                    # Create uploads directory if it doesn't exist
+                    upload_dir = os.path.join(current_app.instance_path, 'uploads', 'profiles')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    
+                    # Generate unique filename
+                    file_ext = photo.filename.rsplit('.', 1)[1].lower()
+                    filename = f"profile_{user_id}_{int(time.time())}.{file_ext}"
+                    photo_path = os.path.join(upload_dir, filename)
+                    photo.save(photo_path)
+                    # Store relative path
+                    photo_path = f"uploads/profiles/{filename}"
+        
+        try:
+            if profile:
+                # Update existing profile
+                if photo_path:
+                    # Delete old photo if exists
+                    if profile['photo_path']:
+                        old_photo = os.path.join(current_app.instance_path, profile['photo_path'])
+                        if os.path.exists(old_photo):
+                            os.remove(old_photo)
+                    db.execute(
+                        'UPDATE student_profiles SET mobile = ?, enrollment_number = ?, class = ?, photo_path = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+                        (mobile, enrollment_number, class_name, photo_path, user_id)
+                    )
+                else:
+                    db.execute(
+                        'UPDATE student_profiles SET mobile = ?, enrollment_number = ?, class = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+                        (mobile, enrollment_number, class_name, user_id)
+                    )
+            else:
+                # Create new profile
+                db.execute(
+                    'INSERT INTO student_profiles (user_id, mobile, enrollment_number, class, photo_path) VALUES (?, ?, ?, ?, ?)',
+                    (user_id, mobile, enrollment_number, class_name, photo_path)
+                )
+            db.commit()
+            flash('Profile updated successfully!', 'success')
+        except sqlite3.IntegrityError:
+            db.rollback()
+            flash('Enrollment number already exists. Please use a different one.', 'danger')
+        except Exception as e:
+            db.rollback()
+            flash(f'An error occurred: {str(e)}', 'danger')
+        
+        return redirect(url_for('student.profile'))
+    
+    return render_template('student_profile.html', user=user, profile=profile)
+
+@bp_student.route('/profile/photo/<path:filename>')
+@login_required
+def profile_photo(filename):
+    """Serve profile photos"""
+    if session.get('role') != 'student':
+        return "Forbidden", 403
+    return send_from_directory(os.path.join(current_app.instance_path, 'uploads', 'profiles'), filename)
+
+@bp_admin.route('/student/<int:student_id>/photo/<path:filename>')
+@admin_required
+def student_photo_admin(student_id, filename):
+    """Serve student profile photos (admin)"""
+    return send_from_directory(os.path.join(current_app.instance_path, 'uploads', 'profiles'), filename)
+
+@bp_teacher.route('/student/<int:student_id>/photo/<path:filename>')
+@teacher_or_admin_required
+def student_photo_teacher(student_id, filename):
+    """Serve student profile photos (teacher)"""
+    return send_from_directory(os.path.join(current_app.instance_path, 'uploads', 'profiles'), filename)
+
 # --- Admin Routes ---
 # @bp_admin.route('/dashboard')
 # @admin_required
@@ -1180,7 +1341,7 @@ def dashboard():
     # Fetch data for the new dashboard
     student_count = db.execute("SELECT COUNT(id) FROM users WHERE role = 'student'").fetchone()[0]
     teacher_count = db.execute("SELECT COUNT(id) FROM users WHERE role = 'teacher'").fetchone()[0]
-    students = db.execute("SELECT id, username, email, password FROM users WHERE role = 'student' ORDER BY username").fetchall()
+    students = db.execute("SELECT id, username, email, password, COALESCE(is_active, 1) as is_active FROM users WHERE role = 'student' ORDER BY username").fetchall()
     teachers = db.execute("SELECT id, username, email, password FROM users WHERE role = 'teacher' ORDER BY username").fetchall()
     # Fetch contact messages
     contact_messages = db.execute("SELECT id, name, email, message, created_at FROM contact ORDER BY created_at DESC").fetchall()
@@ -1305,6 +1466,37 @@ def delete_contact(contact_id):
     except sqlite3.Error as e:
         flash(f'Error deleting contact message: {e}', 'error')
     return redirect(url_for('admin.dashboard'))
+
+@bp_admin.route('/student/<int:student_id>/toggle_active', methods=['POST'])
+@admin_required
+def toggle_student_active(student_id):
+    """Toggle student account active status"""
+    db = get_db()
+    student = db.execute('SELECT id, COALESCE(is_active, 1) as is_active FROM users WHERE id = ? AND role = "student"', (student_id,)).fetchone()
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+    
+    new_status = 0 if student['is_active'] else 1
+    db.execute('UPDATE users SET is_active = ? WHERE id = ?', (new_status, student_id))
+    db.commit()
+    
+    return jsonify({
+        'success': True,
+        'new_status': bool(new_status)
+    })
+
+@bp_admin.route('/student/<int:student_id>/profile')
+@admin_required
+def view_student_profile(student_id):
+    """View student profile (admin)"""
+    db = get_db()
+    student = db.execute('SELECT id, username, email, COALESCE(is_active, 1) as is_active FROM users WHERE id = ? AND role = "student"', (student_id,)).fetchone()
+    if not student:
+        flash('Student not found.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    
+    profile = db.execute('SELECT * FROM student_profiles WHERE user_id = ?', (student_id,)).fetchone()
+    return render_template('view_student_profile.html', student=student, profile=profile, is_admin=True)
 
 # Sending Mail to all---------------------------------------------------
 @bp_admin.route('/send_mail', methods=['POST'])
@@ -1497,6 +1689,36 @@ def analytics():
     student_count = db.execute('SELECT COUNT(*) FROM users WHERE role = "student"').fetchone()[0]
     return render_template('analytics.html', quiz_count=quiz_count, student_count=student_count)
 
+@bp_teacher.route('/quiz/<int:quiz_id>/toggle_active', methods=['POST'])
+@login_required
+def toggle_quiz_active(quiz_id):
+    """Toggle the active status of a quiz."""
+    if session.get('role') != 'teacher':
+        return jsonify({'error': 'Permission denied'}), 403
+    
+    db = get_db()
+    # Verify the quiz belongs to the current teacher
+    quiz = db.execute(
+        'SELECT id, is_active FROM quizzes WHERE id = ? AND teacher_id = ?',
+        (quiz_id, session['user_id'])
+    ).fetchone()
+    
+    if not quiz:
+        return jsonify({'error': 'Quiz not found or permission denied'}), 404
+    
+    # Toggle the status (SQLite uses 0/1 for boolean)
+    new_status = 0 if quiz['is_active'] else 1
+    db.execute(
+        'UPDATE quizzes SET is_active = ? WHERE id = ?',
+        (new_status, quiz_id)
+    )
+    db.commit()
+    
+    return jsonify({
+        'success': True,
+        'new_status': bool(new_status)
+    })
+
 @bp_teacher.route('/api/quiz/delete/<int:quiz_id>', methods=['POST'])
 @login_required
 def api_delete_quiz(quiz_id):
@@ -1551,10 +1773,17 @@ def api_join_quiz():
         return redirect(url_for('student.dashboard'))
 
     db = get_db()
-    quiz = db.execute('SELECT id, title, room_code FROM quizzes WHERE room_code = ?', (room_code,)).fetchone()
+    quiz = db.execute('SELECT id, title, room_code, COALESCE(is_active, 1) as is_active FROM quizzes WHERE room_code = ?', (room_code,)).fetchone()
     print(f"[DEBUG api_join_quiz] db_lookup_quiz={dict(quiz) if quiz else None}")
 
     if quiz:
+        # Check if quiz is active
+        if not quiz['is_active']:
+            if request.is_json:
+                return jsonify({'error': 'This quiz is currently inactive. Please contact your teacher.'}), 403
+            flash('This quiz is currently inactive. Please contact your teacher.')
+            return redirect(url_for('student.dashboard'))
+        
         # Check if student has already taken this quiz
         result = db.execute('SELECT id FROM results WHERE quiz_id = ? AND student_id = ?',
                           (quiz['id'], session['user_id'])).fetchone()

@@ -24,22 +24,22 @@
         </div>
         <form id="quiz-form" data-quiz-id="{{ quiz.id }}" data-time-limit="{{ quiz.time_limit }}">
             <div id="question-container"></div>
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <div class="quiz-controls">
                 <button id="prev-btn" class="btn btn-secondary" type="button">Previous</button>
                 <button id="next-btn" class="btn btn-primary" type="button">Next</button>
-                <button id="submit-btn" class="btn btn-success" type="submit" style="display:none;">Submit Answers</button>
-                <span id="question-progress" style="margin-left: auto;"></span>
+                <button id="submit-btn" class="btn btn-success" type="submit">Submit Answers</button>
+                <span id="question-progress" class="question-progress-text"></span>
             </div>
         </form>
-        <div class="quiz-progress-bar" style="margin-top: 1rem;">
-            <div id="progress-bar-inner" class="quiz-progress-bar-inner" style="width:0%"></div>
+        <div class="quiz-progress-bar">
+            <div id="progress-bar-inner" class="quiz-progress-bar-inner"></div>
         </div>
-        <div id="quiz-error-message" style="display:none;color:#b91c1c;background:#fee2e2;padding:1rem;margin-top:1rem;border-radius:0.5rem;"></div>
+        <div id="quiz-error-message" class="quiz-error-message"></div>
     </div>
     <!-- All quiz logic is now in static/js/script.js, which reads window.antiCheatingFeatures, window.questionsData, window.flashMessage -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <noscript>
-        <div style="color: #991b1b; background: #fee2e2; padding: 1rem; border-radius: 0.5rem; margin-top: 2rem;">
+        <div class="quiz-error-message">
             <strong>Warning:</strong> JavaScript is disabled in your browser. This is logged as suspicious activity and may prevent quiz submission.
             <img src="/student/api/log_suspicious_js?quiz_id={{ quiz.id }}" style="display:none;" />
         </div>

@@ -107,10 +107,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only start the quiz timer after the student has started (used for fullscreen requirement)
     let quizStarted = true;
         let tabSwitchCount = 0;
+        let hasTabSwitched = false; // Flag to track if tab switch actually occurred
         let rapidChangeCount = 0;
         let lastChangeTime = Date.now();
         const AUTO_SUBMIT_REASON = { NONE: '', TAB: 'tab_switch', RAPID: 'rapid_change', FULLSCREEN: 'fullscreen_exit' };
         let autoSubmitReason = AUTO_SUBMIT_REASON.NONE;
+        let isFullscreenActive = false; // Track fullscreen state to prevent false tab-switch triggers
+        let questionsRendered = false; // Track if questions have been rendered
 
         function doAutoSubmit(reason) {
             if (!antiCheatingFeatures.auto_submit) return;
@@ -127,24 +130,31 @@ document.addEventListener('DOMContentLoaded', function() {
             quizForm.addEventListener('paste', function(e) { e.preventDefault(); });
             quizForm.addEventListener('cut', function(e) { e.preventDefault(); });
         }
-        // Tab switch detection
+        // Tab switch detection - Fixed to prevent false positives
         if (antiCheatingFeatures.tab_switch_detection) {
-            window.addEventListener('blur', function() {
-                tabSwitchCount++;
-                alert('Warning: You switched away from the quiz window. This is logged.');
-                fetch('/student/api/log_suspicious', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ event: 'tab_switch', quiz_id: quizForm.dataset.quizId })
-                });
-                if (tabSwitchCount > 3) doAutoSubmit(AUTO_SUBMIT_REASON.TAB);
+            // Use visibilitychange event for accurate tab switch detection
+            document.addEventListener('visibilitychange', function() {
+                // Only trigger if document becomes hidden (real tab switch)
+                // AND not during fullscreen transitions
+                if (document.hidden && !isFullscreenActive && quizStarted) {
+                    hasTabSwitched = true;
+                    tabSwitchCount++;
+                    alert('Warning: You switched away from the quiz window. This is logged.');
+                    fetch('/student/api/log_suspicious', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ event: 'tab_switch', quiz_id: quizForm.dataset.quizId })
+                    }).catch(function(){});
+                    if (tabSwitchCount > 3) doAutoSubmit(AUTO_SUBMIT_REASON.TAB);
+                }
             });
         }
         // Fullscreen required — improved flow:
         // - Show an overlay with a user-gesture button to enter fullscreen (browsers require a gesture)
         // - Pause the timer until fullscreen is entered
         // - Track fullscreen exits, log them and auto-submit after a configurable threshold
+        // - Ensure fullscreen activation does NOT interrupt question loading or cause re-renders
         if (antiCheatingFeatures.fullscreen_mode) {
             quizStarted = false; // wait for user to explicitly start
             const exitThreshold = (typeof antiCheatingFeatures.fullscreen_exit_threshold === 'number') ? antiCheatingFeatures.fullscreen_exit_threshold : 1;
@@ -192,14 +202,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
             function hideOverlayAndStart() {
                 if (overlay) overlay.style.display = 'none';
+                isFullscreenActive = true;
                 quizStarted = true;
+                // Only render questions if they haven't been rendered yet
+                // This prevents re-rendering when fullscreen is activated
+                if (!questionsRendered) {
+                    questionsRendered = true;
+                    // Use setTimeout to ensure fullscreen transition is complete before rendering
+                    setTimeout(function() {
+                        renderQuestion();
+                    }, 100);
+                }
             }
 
             if (enterBtn) {
                 enterBtn.addEventListener('click', function() {
                     // Try to request fullscreen as a user gesture
+                    // This is a separate event listener that doesn't interfere with question loading
                     requestFullscreenOnElement(quizForm).then(function() {
-                        hideOverlayAndStart();
+                        // Don't call hideOverlayAndStart here - let fullscreenchange event handle it
+                        // This prevents interruption of question loading
                         // Optionally notify server that quiz started in fullscreen
                         try {
                             fetch('/student/api/quiz/start', {
@@ -216,13 +238,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
-            // If user presses F11 or browser enters fullscreen by other means, treat that as started too
-            document.addEventListener('fullscreenchange', function(){
-                if (document.fullscreenElement) {
+            // Separate fullscreenchange event listener - moved to its own handler
+            // This ensures fullscreen logic doesn't interrupt question loading
+            function handleFullscreenChange() {
+                // Check for fullscreen using all vendor prefixes
+                const isFullscreen = !!(document.fullscreenElement || 
+                    document.webkitFullscreenElement || 
+                    document.mozFullScreenElement || 
+                    document.msFullscreenElement);
+                
+                if (isFullscreen) {
                     // Entered fullscreen
+                    isFullscreenActive = true;
                     hideOverlayAndStart();
                 } else {
                     // Exited fullscreen
+                    isFullscreenActive = false;
                     fullscreenExitCount++;
                     alert('You exited fullscreen. This action is logged.');
                     fetch('/student/api/log_suspicious', {
@@ -240,7 +271,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-            });
+            }
+            
+            // Attach fullscreen change listeners for all vendor prefixes
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+            
+            // Check if already in fullscreen when page loads (edge case)
+            setTimeout(function() {
+                const isFullscreen = !!(document.fullscreenElement || 
+                    document.webkitFullscreenElement || 
+                    document.mozFullScreenElement || 
+                    document.msFullscreenElement);
+                if (isFullscreen) {
+                    handleFullscreenChange();
+                }
+            }, 100);
         }
         if (antiCheatingFeatures.random_question_order) {
             questionsData = [...questionsData].sort(function() { return Math.random() - 0.5; });
@@ -299,12 +347,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 optionsHTML += '<button type="button" class="option-btn' + (isSelected ? ' selected' : '') + '" data-option-index="' + mappedIndex + '"><span><strong>' + String.fromCharCode(65 + index) + '.</strong> ' + option + '</span></button>';
             });
             optionsHTML += '</div>';
-            questionContainer.innerHTML = '<h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem;">' + question.question_text + '</h2>' + optionsHTML;
+            questionContainer.innerHTML = '<h2>' + question.question_text + '</h2>' + optionsHTML;
             progressText.textContent = 'Question ' + (currentQuestionIndex + 1) + ' of ' + questionsData.length;
             progressBar.style.width = (((currentQuestionIndex + 1) / questionsData.length) * 100) + '%';
             prevBtn.disabled = currentQuestionIndex === 0;
-            nextBtn.style.display = currentQuestionIndex === questionsData.length - 1 ? 'none' : 'inline-flex';
-            submitBtn.style.display = currentQuestionIndex === questionsData.length - 1 ? 'inline-flex' : 'none';
+            if (currentQuestionIndex === questionsData.length - 1) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'inline-flex';
+            } else {
+                nextBtn.style.display = 'inline-flex';
+                submitBtn.style.display = 'none';
+            }
         }
         questionContainer.addEventListener('click', function(e) {
             const target = e.target.closest('.option-btn');
@@ -343,6 +396,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (antiCheatingFeatures.strict_time_limits && timeLeft <= 0) {
                 alert("Time's up! Your answers will be submitted automatically.");
             }
+            // Only show tab switch warning if flag is truly true
+            if (antiCheatingFeatures.tab_switch_detection && hasTabSwitched && tabSwitchCount > 0) {
+                // Warning already shown during tab switch, just log it
+            }
             const quizId = quizForm.dataset.quizId;
             const answersPayload = {};
             questionsData.forEach(function(q, index) {
@@ -376,7 +433,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error submitting quiz: ' + error.message);
             }
         });
-        renderQuestion();
+        // Only render questions immediately if fullscreen is not required
+        // If fullscreen is required, questions will be rendered after fullscreen is entered
+        if (!antiCheatingFeatures.fullscreen_mode) {
+            renderQuestion();
+            questionsRendered = true;
+        }
 
         // Show error if no questions or flash message
         if (!Array.isArray(questionsData) || questionsData.length === 0) {
