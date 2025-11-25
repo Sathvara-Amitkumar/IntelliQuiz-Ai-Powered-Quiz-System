@@ -5,3 +5,6 @@ google-auth
 google-auth-oauthlib
 requests
 werkzeug
+gunicorn
+jinja2
+itsdangerous
