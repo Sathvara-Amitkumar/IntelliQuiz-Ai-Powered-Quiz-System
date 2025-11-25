@@ -44,7 +44,7 @@ def get_db():
     if 'db' not in g:
         try:
             g.db = sqlite3.connect(
-                os.path.join(current_app.instance_path, 'quiz_database.db'),
+                os.getenv('DATABASE_PATH', os.path.join(current_app.instance_path, 'quiz_database.db')),
                 detect_types=sqlite3.PARSE_DECLTYPES,
                 timeout=30.0,  # 30 second timeout for locks
                 isolation_level='IMMEDIATE',  # Use immediate transaction mode
@@ -86,7 +86,7 @@ def init_db():
             return
     except sqlite3.Error:
         # If we can't connect, the database might be corrupted
-        db_path = os.path.join(current_app.instance_path, 'quiz_database.db')
+        db_path = os.getenv('DATABASE_PATH', os.path.join(current_app.instance_path, 'quiz_database.db'))
         if os.path.exists(db_path):
             # Create a backup before removing
             backup_path = f"{db_path}.bak"
@@ -109,7 +109,7 @@ def init_db():
 def init_app_commands(app):
     app.teardown_appcontext(close_db)
     with app.app_context():
-        db_path = os.path.join(app.instance_path, 'quiz_database.db')
+        db_path = os.getenv('DATABASE_PATH', os.path.join(app.instance_path, 'quiz_database.db'))
         
         # Ensure instance folder exists
         os.makedirs(app.instance_path, exist_ok=True)
@@ -2024,7 +2024,7 @@ def create_app():
 
     # Always initialize the database schema on startup
     with app.app_context():
-        db_path = os.path.join(app.instance_path, 'quiz_database.db')
+        db_path = os.getenv('DATABASE_PATH', os.path.join(app.instance_path, 'quiz_database.db'))
         if not os.path.exists(db_path):
             print("Database not found. Initializing...")
             init_db()
@@ -2081,4 +2081,5 @@ def favicon():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
