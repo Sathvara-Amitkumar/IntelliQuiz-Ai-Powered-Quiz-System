@@ -19,7 +19,6 @@ __pycache__/
 *.sqlite3
 *.db
 *.sqlite
-*.sql
 
 # Instance & uploads (user data, runtime files)
 instance/
