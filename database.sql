@@ -1,7 +1,3 @@
--- database.sql
--- This SQL script defines the structure (schema) of our database.
--- It creates the necessary tables to store users, quizzes, questions, and results.
-
 -- Users Table: A central table to store core authentication data
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,8 +51,8 @@ CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     quiz_id INTEGER NOT NULL,
     question_text TEXT NOT NULL,
-    options TEXT, -- Nullable for viva questions
-    correct_answer INTEGER, -- Nullable for viva questions
+    options TEXT, 
+    correct_answer INTEGER,
     FOREIGN KEY (quiz_id) REFERENCES quizzes (id) ON DELETE CASCADE
 );
 
