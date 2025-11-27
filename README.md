@@ -1,4 +1,4 @@
-## IntelliQuiz - ![Live demo](https://intelliquiz-76yh.onrender.com/)
+## IntelliQuiz - [Live demo](https://intelliquiz-76yh.onrender.com/)
 
 IntelliQuiz is a web-based quiz and viva platform built with Flask. Teachers can create quizzes (MCQ or viva), generate questions using Google Gemini, and enable anti-cheating features. Students join quizzes using room codes and get detailed results. Admins manage users and system settings.
 
