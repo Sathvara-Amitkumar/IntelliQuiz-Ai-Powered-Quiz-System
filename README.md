@@ -1,145 +1,62 @@
-# IntelliQuiz
+## IntelliQuiz
 
-IntelliQuiz is a comprehensive web-based quiz management system built with Flask. It enables teachers to create, manage, and distribute quizzes to students, with advanced features like AI-powered question generation, anti-cheating measures, and real-time analytics. The system supports multiple user roles (Admin, Teacher, Student) and includes email notifications, CSV user imports, and detailed result tracking.
+IntelliQuiz is a web-based quiz and viva platform built with Flask. Teachers can create quizzes (MCQ or viva), generate questions using Google Gemini, and enable anti-cheating features. Students join quizzes using room codes and get detailed results. Admins manage users and system settings.
 
-## Features
+[Live demo](https://intelliquiz-76yh.onrender.com/) • [Run locally](#quick-start)
 
-### For Teachers
-- **Quiz Creation**: Create quizzes with customizable settings including time limits and anti-cheating features
-- **AI-Powered Question Generation**: Use Google Gemini AI to automatically generate multiple-choice or viva (short answer) questions
-- **Manual Question Input**: Add questions manually or upload from text files
-- **Anti-Cheating Measures**: Implement features like tab switch detection, copy-paste prevention, fullscreen mode, and plagiarism detection
-- **Student Management**: View student performance, send quiz invitations via email, and monitor suspicious activities
-- **Analytics Dashboard**: Track quiz statistics, student scores, and activity logs
+[![Live demo](assets/live_demo.svg)](https://intelliquiz-76yh.onrender.com/)
 
-### For Students
-- **Quiz Participation**: Join quizzes using room codes and take them with real-time monitoring
-- **Result Viewing**: Review quiz results with detailed answer breakdowns
-- **Dashboard**: View available and completed quizzes with performance metrics
+**Key features:**
+- AI-powered question generation (Google Gemini)
+- Role-based access: Admin, Teacher, Student
+- Anti-cheating controls: tab-switch detection, copy-paste prevention, fullscreen enforcement, plagiarism alerts
+- CSV import, bulk email, and activity logging
+- Simple SQLite setup with automatic schema initialization
 
-### For Admins
-- **User Management**: Create, edit, delete, and manage users (students and teachers)
-- **Bulk Operations**: Import users from CSV files and send bulk email notifications
-- **Password Management**: Generate and refresh user passwords
-- **System Overview**: Monitor user counts and system statistics
+**Quick Start**
 
-### General Features
-- **Secure Authentication**: Role-based access control with session management
-- **Email Integration**: SMTP-based email sending for notifications and credentials
-- **Database**: SQLite-based with robust error handling and concurrency support
-- **Responsive UI**: Modern web interface with CSS and JavaScript enhancements
-- **Activity Logging**: Comprehensive logging of user actions and suspicious activities
-
-## Technology Stack
-
-- **Backend**: Flask (Python web framework)
-- **Database**: SQLite
-- **AI Integration**: Google Gemini API for question generation
-- **Email**: SMTP for notifications
-- **Frontend**: HTML, CSS, JavaScript
-- **Authentication**: Session-based with role management
-- **File Handling**: CSV import for user management
-
-### Setup Steps
-
-1. **Clone the repository**:
-   ```bash
+1. Clone:
+   ```powershell
    git clone https://github.com/Sathvara-Amitkumar/IntelliQuiz-Ai-Powered-Quiz-System.git
-   cd IntelliQuiz-Ai-Powered-Quiz-System
+   cd "IntelliQuiz-Ai-Powered-Quiz-System"
    ```
-
-2. **Create a virtual environment** (recommended):
-   ```bash
+2. Create venv & install:
+   ```powershell
    python -m venv venv
-   venv\Scripts\activate  
-   ```
-
-3. **Install dependencies**:
-   ```bash
+   .\venv\Scripts\Activate.ps1
    pip install -r requirements.txt
    ```
-
-4. **Set up environment variables**:
-   Create a `.env` file in the root directory with the following variables:
+3. Create `.env` (example):
    ```env
-   SECRET_KEY=your-secret-key-here
+   SECRET_KEY=replace-me
    ADMIN_USERNAME=admin
-   ADMIN_PASSWORD=adminpassword
-   GEMINI_API_KEY=your-gemini-api-key
-   MAIL_SERVER=smtp.gmail.com
+   ADMIN_PASSWORD=adminpass
+   GEMINI_API_KEY=your-gemini-key
+   MAIL_SERVER=smtp.example.com
    MAIL_PORT=587
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-app-password
+   MAIL_USERNAME=you@example.com
+   MAIL_PASSWORD=app-password
    ```
-
-5. **Initialize the database**:
-   The database will be automatically initialized when you run the application for the first time.
-
-6. **Run the application**:
-   ```bash
+4. Run:
+   ```powershell
    python app.py
    ```
+5. Visit `http://localhost:5000` or the live demo link above.
 
-7. **Access the application**:
-   Open your browser and navigate to `http://localhost:5000`
+**Configuration**
+- `ADMIN_USERNAME` / `ADMIN_PASSWORD`: auto-created admin user on first run.
+- `GEMINI_API_KEY`: required to enable AI question generation.
+- `MAIL_*`: SMTP settings for email notifications.
 
-## Configuration
+**File layout (short)**
+- `app.py` — Flask application
+- `requirements.txt` — dependencies
+- `database.sql` — DB schema
+- `templates/` — HTML templates
+- `static/` — CSS/JS
+- `instance/` — runtime DB and uploads
 
-### Environment Variables
-- `SECRET_KEY`: Flask secret key for session security
-- `ADMIN_USERNAME` & `ADMIN_PASSWORD`: Credentials for the admin user (auto-created on first run)
-- `GEMINI_API_KEY`: API key for Google Gemini AI (required for question generation)
-- `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`: SMTP settings for email notifications
-- `SESSION_COOKIE_SECURE`: Set to `True` for HTTPS in production
+Contributions, issues, and questions are welcome. Replace the SVG screenshot in `assets/live_demo.svg` with a real screenshot if you prefer a photographic preview.
 
-### Database
-The application uses SQLite with automatic schema initialization. The database file is created in the `instance/` directory.
-
-## Usage
-
-### Getting Started
-1. Log in as admin using the credentials from your `.env` file
-2. Create teacher and student accounts via the admin dashboard
-3. Teachers can create quizzes and generate questions
-4. Students can join quizzes using room codes provided by teachers
-
-### Creating a Quiz
-1. Log in as a teacher
-2. Navigate to "Create Quiz"
-3. Fill in quiz details and select anti-cheating features
-4. Generate questions using AI or add them manually
-5. Preview and save the quiz
-6. Share the room code with students
-
-### Taking a Quiz
-1. Log in as a student
-2. Enter the room code on the dashboard
-3. Complete the quiz within the time limit
-4. View results after submission
-
-## File Structure
-
-```
-IntelliQuiz/
-├── app.py                 # Main Flask application
-├── requirements.txt       # Python dependencies
-├── database.sql           # Database schema
-├── .env                   # Environment variables (create this)
-├── instance/              # Database and instance files
-├── static/                # Static assets (CSS, JS, images)
-│   ├── css/
-│   ├── js/
-│   └── favicon.ico
-├── templates/             # HTML templates
-├── uploads/               # Uploaded files
-└── utils/                 # Utility modules
-    └── session_store.py   # Session management
-```
-
-## Future Enhancements
-
-- Mobile app development
-- Advanced analytics and reporting
-- Integration with learning management systems
-- Enhanced AI question customization
-- Multi-language support
+---
+_Live demo:_ https://intelliquiz-76yh.onrender.com/
