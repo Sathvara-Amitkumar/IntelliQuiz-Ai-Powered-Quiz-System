@@ -52,6 +52,5 @@ IntelliQuiz is a web-based quiz and viva platform built with Flask. Teachers can
 - `static/` — CSS/JS
 - `instance/` — runtime DB and uploads
 
-Contributions, issues, and questions are welcome. Replace the SVG screenshot in `assets/live_demo.svg` with a real screenshot if you prefer a photographic preview.
 
 ---
