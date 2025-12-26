@@ -5,3 +5,9 @@ google-auth
 google-auth-oauthlib
 requests
 werkzeug
+gunicorn
+jinja2
+itsdangerous
+google-generativeai
+PyPDF2
+python-docx

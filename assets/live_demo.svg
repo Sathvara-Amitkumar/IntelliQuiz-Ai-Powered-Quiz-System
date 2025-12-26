@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#7367F0"/>
+      <stop offset="1" stop-color="#4ECDC4"/>
+    </linearGradient>
+    <style>
+      .title { font: bold 28px 'Segoe UI', Roboto, Arial; fill: #ffffff; }
+      .sub { font: 16px 'Segoe UI', Roboto, Arial; fill: #ffffff; }
+      .url { font: 14px 'Segoe UI', Roboto, Arial; fill: #ffffff; opacity: 0.95 }
+      .card { fill: url(#g); filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25)); }
+      .button { fill: rgba(255,255,255,0.12); stroke: #fff; stroke-opacity:0.06; }
+    </style>
+  </defs>
+  <rect rx="18" ry="18" width="880" height="280" x="10" y="10" class="card" />
+  <g transform="translate(40,50)">
+    <text x="0" y="0" class="title">IntelliQuiz — AI-powered Quiz & Viva System</text>
+    <text x="0" y="40" class="sub">Create quizzes, generate questions with AI, and monitor cheating.</text>
+    <a xlink:href="https://intelliquiz-76yh.onrender.com/" target="_blank">
+      <rect x="0" y="70" rx="8" ry="8" width="220" height="44" class="button" />
+      <text x="20" y="100" class="url">Live demo: intelliquiz-76yh.onrender.com</text>
+    </a>
+    <g transform="translate(260,0)">
+      <rect x="0" y="0" width="560" height="160" rx="10" ry="10" fill="#ffffff" opacity="0.08" />
+      <text x="14" y="24" class="sub">Screenshot placeholder</text>
+      <text x="14" y="48" class="sub">(Replace with a real screenshot image if desired)</text>
+    </g>
+  </g>
+</svg>
