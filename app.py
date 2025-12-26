@@ -1,5 +1,3 @@
-# app.py - Final Version with Admin Panel Logic
-
 import os
 import sqlite3
 import json
@@ -297,67 +295,6 @@ def contact():
     
     return redirect(url_for('main.index') + '#contact')
 
-# -------------------------------------------------------------------------
-
-# --- Authentication Routes ---
-# @bp_auth.route('/login/<role>', methods=('GET', 'POST'))
-# def login(role):
-#     if role not in ['teacher', 'student', 'admin']:
-#         return redirect(url_for('main.index'))
-#     if request.method == 'POST':
-#         username = request.form['username']
-#         password = request.form['password']
-#         remember_me = request.form.get('remember_me', False)
-#         db = get_db()
-#         user = db.execute('SELECT * FROM users WHERE username = ? AND password = ? AND role = ?', (username, password, role)).fetchone()
-        
-#         if user:
-#             ip = request.remote_addr
-            
-#             try:
-#                 db.execute('BEGIN IMMEDIATE')
-#                 recent_login = db.execute('SELECT ip FROM activity_log WHERE student_id = ? AND action = "login" ORDER BY timestamp DESC LIMIT 1', (user['id'],)).fetchone()
-                
-#                 if session.get('user_id') == user['id']:
-#                     flash('Duplicate login detected. You are already logged in elsewhere.')
-#                     db.rollback() 
-#                     return redirect(url_for('main.index'))
-#                 if recent_login and recent_login['ip'] != ip:
-#                     db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-#                                (user['id'], None, 'multi_login_ip', ip, int(time.time())))
-                
-#                 db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-#                            (user['id'], None, 'login', ip, int(time.time())))
-#                 db.commit()
-#             except sqlite3.OperationalError as e:
-#                 db.rollback()
-#                 print(f"Warning: Failed to log login attempt due to locked database: {e}")
-            
-#             session_store = SessionStore(current_app.instance_path)
-#             session_store.store_user_session(user['id'], user['username'], user['role'], password)
-            
-#             session.clear()
-#             session.permanent = remember_me
-#             session['user_id'] = user['id']
-#             session['role'] = user['role']
-#             session['username'] = user['username']
-            
-#             return redirect(url_for(f"{role}.dashboard"))
-            
-#         else:
-#             ip = request.remote_addr
-#             try:
-#                 db.execute('INSERT INTO activity_log (student_id, quiz_id, action, ip, timestamp) VALUES (?, ?, ?, ?, ?)',
-#                     (None, None, 'failed_login', ip, int(time.time())))
-#                 db.commit()
-#             except sqlite3.OperationalError as e:
-#                 db.rollback()
-#                 print(f"Warning: Failed to log failed login attempt due to locked database: {e}")
-            
-#             flash('Invalid credentials or incorrect role.')
-#             return render_template('login.html', role=role)
-    
-#     return render_template('login.html', role=role)
 
 @bp_auth.route('/login', methods=['POST'])
 def login():
